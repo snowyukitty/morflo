@@ -1,6 +1,6 @@
 # Third-party notices
 
-Morflo's own source is dual licensed `MIT OR Apache-2.0`; see [LICENSE.md](LICENSE.md). This file records third-party components used by the source tree or local validation, under their own terms.
+Morflo's own source is dual licensed `MIT OR Apache-2.0`; see [LICENSING.md](LICENSING.md). This file records third-party components used by the source tree or local validation, under their own terms.
 
 ## Runtime source dependencies
 

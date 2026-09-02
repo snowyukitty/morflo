@@ -270,7 +270,7 @@ safe output finalization, recovery, and capability discovery. See the
 
 Morflo is dual licensed under either [Apache-2.0](LICENSE-APACHE) or
 [MIT](LICENSE-MIT), at your option — the customary Rust-ecosystem license, and
-the same terms as every crate Morflo compiles. See [LICENSE.md](LICENSE.md).
+the same terms as every crate Morflo compiles. See [LICENSING.md](LICENSING.md).
 
 This covers Morflo's own source, including its built-in image engine. It does
 not cover FFmpeg: Morflo runs a locally installed `ffmpeg`/`ffprobe` as external

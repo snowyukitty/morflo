@@ -46,7 +46,7 @@ cannot affect the primary release target.
 
 **Resolved: `MIT OR Apache-2.0`.** The owner selected the customary
 Rust-ecosystem dual license, which matches the terms of every crate Morflo
-compiles. `LICENSE.md`, `LICENSE-MIT`, `LICENSE-APACHE`, the Cargo `license`
+compiles. `LICENSING.md`, `LICENSE-MIT`, `LICENSE-APACHE`, the Cargo `license`
 field, `package.json`, `README.md`, `AGENTS.md`, and the notices now agree.
 
 The dependency situation never constrained the choice: every compiled
@@ -104,6 +104,36 @@ These matter for shipping binaries, not for making the repository readable:
 - A Linux release needs an assessment of Tauri's unmaintained GTK 3 bindings.
 - No reviewed redistributable media-engine bundle exists, so video, animated
   GIF, WebP and AVIF still depend on a locally installed FFmpeg.
+
+## How the public repository is kept in sync
+
+`snowyukitty/morflo` is public and starts from a single commit. The full
+development history stays in the private `snowyukitty/morflo-dev`, which is the
+`origin` remote of this checkout.
+
+The public repository is a second remote and a local orphan branch, so it grows
+its own linear history from the same tree:
+
+```powershell
+git remote -v            # origin = morflo-dev (private), public = morflo
+git checkout public-main
+git read-tree -u --reset main   # take main's exact tree, keep this branch's history
+git commit -m "Morflo <version>"
+git push public public-main:main
+git checkout main
+```
+
+`read-tree -u --reset` is what keeps the two in step: it makes the public
+branch's tree identical to `main`, including deletions, without moving the
+branch pointer or importing any private commit.
+
+Re-run the checks in **Verified clean** before each publish. A future commit can
+reintroduce a local path or an account detail as easily as the first one did.
+
+`LICENSE.md` was deliberately renamed to `LICENSING.md`. GitHub's license
+detector matched that pointer file first and reported the repository as "Other /
+NOASSERTION", which is worse than silence. With only `LICENSE-MIT` and
+`LICENSE-APACHE` matching its glob, it reports both licenses correctly.
 
 ## Assessment
 

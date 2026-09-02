@@ -14,7 +14,7 @@ this repository's location; do not assume a drive letter.
 - UI copy, code, identifiers, comments, logs, filenames, commits, and technical documentation are English.
 - Do not add analytics, remote runtime assets, hosted fonts, update checks, or conversion-time network calls.
 - Morflo is dual licensed `MIT OR Apache-2.0`, chosen by the owner on
-  2026-09-03. Keep `LICENSE.md`, `LICENSE-MIT`, `LICENSE-APACHE`, the Cargo
+  2026-09-03. Keep `LICENSING.md`, `LICENSE-MIT`, `LICENSE-APACHE`, the Cargo
   `license` field, and the notices consistent with each other.
 - Do not commit media-engine binaries. Development engines are discovered locally; reviewed sidecars are a release input.
 
