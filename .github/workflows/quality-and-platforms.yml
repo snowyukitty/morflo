@@ -1,0 +1,89 @@
+name: Manual quality and platform builds
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: morflo-quality-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  quality:
+    name: Quality gate (Ubuntu)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - uses: dtolnay/rust-toolchain@1.93.1
+        with:
+          components: clippy,rustfmt
+      - name: Install Linux desktop prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf xdg-utils
+      - name: Activate pinned pnpm
+        run: |
+          corepack enable
+          corepack install --global pnpm@11.17.0
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Install Chromium for product checks
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Run the repository quality contract
+        run: pnpm verify:quality
+
+  platform-build:
+    name: Desktop compile (${{ matrix.label }})
+    needs: quality
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - label: Windows x64
+            runner: windows-latest
+            target: x86_64-pc-windows-msvc
+          - label: macOS Apple Silicon
+            runner: macos-latest
+            target: aarch64-apple-darwin
+          - label: macOS Intel
+            runner: macos-15-intel
+            target: x86_64-apple-darwin
+          - label: Linux x64
+            runner: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - uses: dtolnay/rust-toolchain@1.93.1
+        with:
+          targets: ${{ matrix.target }}
+      - name: Install Linux desktop prerequisites
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf xdg-utils
+      - name: Activate pinned pnpm
+        run: |
+          corepack enable
+          corepack install --global pnpm@11.17.0
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Compile desktop application without publishing
+        run: pnpm tauri build --no-bundle --target ${{ matrix.target }}

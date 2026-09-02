@@ -1,0 +1,16 @@
+node_modules
+AGENTS.md
+dist
+coverage
+playwright-report
+test-results
+src-tauri/target
+target
+work
+artifacts
+screenshots
+fixtures/generated
+pnpm-lock.yaml
+Cargo.lock
+*.svg
+*.json

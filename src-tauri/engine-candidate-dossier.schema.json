@@ -1,0 +1,155 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://morflo.invalid/schemas/engine-candidate-dossier-v1.json",
+  "title": "Morflo unreviewed media-engine candidate dossier",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "kind",
+    "capturePolicy",
+    "assurance",
+    "engine",
+    "target",
+    "buildConfiguration",
+    "compilerIdentification",
+    "observedLibraryVersions",
+    "executables",
+    "additionalFiles",
+    "observedCapabilities"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "kind": { "const": "morflo-engine-candidate-dossier" },
+    "capturePolicy": { "const": "morflo-offline-probe-v1" },
+    "assurance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "statement"],
+      "properties": {
+        "status": { "const": "unreviewed" },
+        "statement": {
+          "const": "Observed technical evidence only; not approved for bundling, licensing, or redistribution."
+        }
+      }
+    },
+    "engine": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version"],
+      "properties": {
+        "name": { "const": "FFmpeg" },
+        "version": { "type": "string", "minLength": 1, "maxLength": 128 }
+      }
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["platform", "architecture"],
+      "properties": {
+        "platform": { "enum": ["windows", "macos", "linux"] },
+        "architecture": { "enum": ["x86_64", "aarch64"] }
+      }
+    },
+    "buildConfiguration": { "type": "string", "minLength": 2, "maxLength": 65536 },
+    "compilerIdentification": { "type": "string", "minLength": 1, "maxLength": 512 },
+    "observedLibraryVersions": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 32,
+      "items": { "$ref": "#/$defs/libraryVersion" }
+    },
+    "executables": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ffmpeg", "ffprobe"],
+      "properties": {
+        "ffmpeg": { "$ref": "#/$defs/executableFile" },
+        "ffprobe": { "$ref": "#/$defs/executableFile" }
+      }
+    },
+    "additionalFiles": {
+      "type": "array",
+      "maxItems": 254,
+      "items": { "$ref": "#/$defs/evidenceFile" }
+    },
+    "observedCapabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["decoders", "encoders", "demuxers", "muxers", "filters", "outputs"],
+      "properties": {
+        "decoders": { "$ref": "#/$defs/capabilityList" },
+        "encoders": { "$ref": "#/$defs/capabilityList" },
+        "demuxers": { "$ref": "#/$defs/capabilityList" },
+        "muxers": { "$ref": "#/$defs/capabilityList" },
+        "filters": { "$ref": "#/$defs/capabilityList" },
+        "outputs": {
+          "type": "array",
+          "maxItems": 8,
+          "uniqueItems": true,
+          "items": { "enum": ["png", "jpeg", "webp", "avif", "ico", "mp4", "webm", "gif"] }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "sizeBytes": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "relativePath": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*\\\\).+$"
+    },
+    "executableFile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["filename", "sizeBytes", "sha256"],
+      "properties": {
+        "filename": { "$ref": "#/$defs/relativePath" },
+        "sizeBytes": { "$ref": "#/$defs/sizeBytes" },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "evidenceFile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sizeBytes", "sha256"],
+      "properties": {
+        "path": { "$ref": "#/$defs/relativePath" },
+        "sizeBytes": { "$ref": "#/$defs/sizeBytes" },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "capabilityList": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 4096,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 128,
+        "pattern": "^[A-Za-z0-9_.-]+(?:,[A-Za-z0-9_.-]+)*$"
+      }
+    },
+    "libraryVersion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "major", "minor", "micro", "version", "ident"],
+      "properties": {
+        "name": { "type": "string", "pattern": "^[A-Za-z0-9_.-]+$" },
+        "major": { "type": "integer", "minimum": 0 },
+        "minor": { "type": "integer", "minimum": 0 },
+        "micro": { "type": "integer", "minimum": 0 },
+        "version": { "type": "integer", "minimum": 0 },
+        "ident": { "type": "string", "minLength": 1, "maxLength": 128 }
+      }
+    }
+  }
+}

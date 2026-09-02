@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "progId": "Morflo.Media.1",
+  "applicationName": "Morflo",
+  "applicationDescription": "Local image and video conversion",
+  "fileTypeDescription": "Media file for Morflo",
+  "executable": "morflo.exe",
+  "extensions": [
+    "png",
+    "jpg",
+    "jpeg",
+    "webp",
+    "bmp",
+    "tif",
+    "tiff",
+    "avif",
+    "ico",
+    "mp4",
+    "mov",
+    "mkv",
+    "webm"
+  ]
+}

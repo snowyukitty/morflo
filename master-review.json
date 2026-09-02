@@ -1,0 +1,41 @@
+{
+  "schema": 1,
+  "source": "master.svg",
+  "source_sha256": "f69e9502ba8acebb627f96625ddece6a863bef4845a9e192419bf6e22f02f121",
+  "contract_sha256": "2dd3759c4c116ac4e647eca52c791592f0224dfdca72f65ea67df1b24052b11a",
+  "project": "morflo",
+  "user_job": "Move a file through one trustworthy transformation and recognize the result immediately.",
+  "essence": "flowing transformation",
+  "personality": "calm, precise, warm, trustworthy, quietly distinctive",
+  "signature_device": "A broad diagonal hinge joins two media windows into one folded contact strip.",
+  "cliches": [
+    "recycling arrows",
+    "two arrows",
+    "cloud upload",
+    "bare M monogram",
+    "purple AI gradient",
+    "generic aperture"
+  ],
+  "targets": [
+    "tauri"
+  ],
+  "build": {
+    "theme_color": "#347364",
+    "background_color": "#F4EFE7",
+    "electron_radius": 0.0,
+    "tray_template_mode": "auto",
+    "color_scheme": "light",
+    "tray_source_sha256": null
+  },
+  "warnings": [],
+  "scores": {
+    "legibility": 4,
+    "distinctiveness": 4,
+    "balance": 5,
+    "color": 5,
+    "scalability": 4,
+    "craft": 5
+  },
+  "notes": "The source-bound checkpoint sheet and exact-size Tauri assets were inspected at 16, 32, 64, 128, and 256 px on light, dark, and mid-grey contexts. Both media windows remain distinct at 16 px, the folded contact-strip silhouette survives without color, the warm hinge remains subordinate, and the structural outline preserves contrast. The interactive Review Lab was not required for this evidence refresh because the unchanged shipped design had already completed three visual iterations; this review re-bound that judgment to the current source and target contract.",
+  "status": "ready"
+}

@@ -1,0 +1,59 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Morflo",
+  "version": "0.2.1",
+  "identifier": "com.morflo.desktop",
+  "build": {
+    "beforeBuildCommand": "pnpm build:frontend",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "Morflo",
+        "width": 1240,
+        "height": 800,
+        "minWidth": 780,
+        "minHeight": 620,
+        "center": true,
+        "resizable": true,
+        "fullscreen": false,
+        "decorations": true
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; connect-src ipc: http://ipc.localhost; img-src 'self' data: blob:; media-src 'self' data: blob:; font-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; object-src 'none'; base-uri 'none'; frame-src 'none'"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis"],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "category": "Utility",
+    "shortDescription": "Local image and video conversion",
+    "longDescription": "Morflo converts common images and videos locally without uploading files.",
+    "linux": {
+      "deb": {
+        "files": {
+          "/usr/share/doc/morflo/README.md": "../README.md",
+          "/usr/share/doc/morflo/THIRD_PARTY_NOTICES.md": "../THIRD_PARTY_NOTICES.md",
+          "/usr/share/doc/morflo/media-engine-distribution.md": "../docs/legal/media-engine-distribution.md"
+        }
+      }
+    },
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser",
+        "compression": "lzma",
+        "installerHooks": "./windows/hooks.nsh"
+      }
+    }
+  }
+}

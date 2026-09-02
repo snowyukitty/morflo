@@ -1,0 +1,44 @@
+# IconFlow project brief and deterministic build contract.
+# Relative paths are resolved from this file.
+schema_version = 1
+
+[project]
+name = "morflo"
+master = "master.svg"
+output = "src-tauri"
+casebook = "casebook"
+
+[brief]
+app_intent = "A calm local desktop tool that turns common media into the right format without exposing private files."
+user_job = "Move a file through one trustworthy transformation and recognize the result immediately."
+essence = "flowing transformation"
+personality = ["calm", "precise", "warm", "trustworthy", "quietly distinctive"]
+
+[design]
+palette = ["#173F38", "#347364", "#E7A66D", "#F4EFE7"]
+cliches = ["recycling arrows", "two arrows", "cloud upload", "bare M monogram", "purple AI gradient", "generic aperture"]
+signature_device = "A broad diagonal hinge joins two media windows into one folded contact strip."
+device_family = "folded strip"
+device_detail = "The hinge is the third visible mass, wide enough to survive at 16px."
+concept_lens = "object plus verb: a contact strip physically changes direction"
+
+[build]
+targets = ["tauri"]
+theme_color = "#347364"
+background_color = "#f4efe7"
+electron_radius = 0
+tray_ts = false
+tray_svg = ""
+tray_template_mode = "auto"
+color_scheme = "light"
+optimize_png = true
+
+[review]
+status = "pending"
+source_sha256 = ""
+contract_sha256 = ""
+# Review Lab receipt is preferred. For this manual fallback, set status to
+# "approved" and copy both hashes from the exported receipt; `ship` requires every
+# score >= 4 and rejects any changed source, target, or visual transform.
+scores = {}
+notes = ""

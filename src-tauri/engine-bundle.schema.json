@@ -1,0 +1,170 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://morflo.invalid/schemas/engine-bundle-v1.json",
+  "title": "Morflo reviewed media-engine bundle manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "engine",
+    "target",
+    "provenance",
+    "buildConfiguration",
+    "declaredLicense",
+    "executables",
+    "reviewedCapabilities",
+    "noticeReferences",
+    "sourceOfferReferences",
+    "review"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "engine": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version"],
+      "properties": {
+        "name": { "const": "FFmpeg" },
+        "version": { "type": "string", "minLength": 1, "maxLength": 128 }
+      }
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["platform", "architecture"],
+      "properties": {
+        "platform": { "enum": ["windows", "macos", "linux"] },
+        "architecture": { "enum": ["x86_64", "aarch64"] }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sourceUrlOrIdentifier"],
+      "properties": {
+        "sourceUrlOrIdentifier": { "type": "string", "minLength": 1, "maxLength": 2048 }
+      }
+    },
+    "buildConfiguration": { "type": "string", "minLength": 2, "maxLength": 65536 },
+    "declaredLicense": { "type": "string", "minLength": 1, "maxLength": 256 },
+    "executables": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ffmpeg", "ffprobe"],
+      "properties": {
+        "ffmpeg": { "$ref": "#/$defs/executableFile" },
+        "ffprobe": { "$ref": "#/$defs/executableFile" }
+      }
+    },
+    "supportingFiles": {
+      "type": "array",
+      "maxItems": 128,
+      "items": { "$ref": "#/$defs/supportingFile" }
+    },
+    "reviewedCapabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["decoders", "encoders", "demuxers", "muxers", "filters", "outputs"],
+      "properties": {
+        "decoders": { "$ref": "#/$defs/capabilityList" },
+        "encoders": { "$ref": "#/$defs/capabilityList" },
+        "demuxers": { "$ref": "#/$defs/capabilityList" },
+        "muxers": { "$ref": "#/$defs/capabilityList" },
+        "filters": { "$ref": "#/$defs/capabilityList" },
+        "outputs": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "uniqueItems": true,
+          "items": { "enum": ["png", "jpeg", "webp", "avif", "ico", "mp4", "webm", "gif"] }
+        }
+      }
+    },
+    "noticeReferences": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 32,
+      "items": { "$ref": "#/$defs/evidenceFile" }
+    },
+    "sourceOfferReferences": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 32,
+      "items": { "$ref": "#/$defs/evidenceFile" }
+    },
+    "review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "reviewedBy", "reviewedAt", "validUntil"],
+      "properties": {
+        "status": { "enum": ["pending", "approved", "rejected"] },
+        "reviewedBy": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "reviewedAt": { "$ref": "#/$defs/date" },
+        "validUntil": { "$ref": "#/$defs/date" }
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "sizeBytes": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "relativePath": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*\\\\).+$"
+    },
+    "executableFile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["filename", "sizeBytes", "sha256"],
+      "properties": {
+        "filename": { "$ref": "#/$defs/relativePath" },
+        "sizeBytes": { "$ref": "#/$defs/sizeBytes" },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "evidenceFile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sizeBytes", "sha256"],
+      "properties": {
+        "path": { "$ref": "#/$defs/relativePath" },
+        "sizeBytes": { "$ref": "#/$defs/sizeBytes" },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "supportingFile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "role", "sizeBytes", "sha256"],
+      "properties": {
+        "path": { "$ref": "#/$defs/relativePath" },
+        "role": { "enum": ["runtime_library", "data"] },
+        "sizeBytes": { "$ref": "#/$defs/sizeBytes" },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "capabilityList": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 4096,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 128,
+        "pattern": "^[A-Za-z0-9_.-]+(?:,[A-Za-z0-9_.-]+)*$"
+      }
+    },
+    "date": {
+      "type": "string",
+      "format": "date",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    }
+  }
+}

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <path fill="#205E51" stroke="#F4EFE7" stroke-width="32" stroke-linejoin="round" paint-order="stroke fill" fill-rule="evenodd" d="M160 124h520c58 0 104 46 104 104v176c0 58-46 104-104 104H160c-58 0-104-46-104-104V228c0-58 46-104 104-104Zm104 112c-28 0-50 22-50 50v60c0 28 22 50 50 50h312c28 0 50-22 50-50v-60c0-28-22-50-50-50H264Z"/>
+  <path fill="#E7A66D" stroke="#F4EFE7" stroke-width="32" stroke-linejoin="round" paint-order="stroke fill" d="m622 404 186 192-200 84-188-192 202-84Z"/>
+  <path fill="#3F826F" stroke="#F4EFE7" stroke-width="32" stroke-linejoin="round" paint-order="stroke fill" fill-rule="evenodd" d="M344 548h520c58 0 104 46 104 104v176c0 58-46 104-104 104H344c-58 0-104-46-104-104V652c0-58 46-104 104-104Zm104 112c-28 0-50 22-50 50v60c0 28 22 50 50 50h312c28 0 50-22 50-50v-60c0-28-22-50-50-50H448Z"/>
+</svg>
