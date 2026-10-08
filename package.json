@@ -40,7 +40,8 @@
     "measure:performance": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/measure-engine-performance.ps1 && playwright test tests/e2e/performance.spec.ts",
     "audit:privacy": "node scripts/audit-privacy.mjs",
     "audit:prod": "pnpm audit --prod --audit-level high",
-    "verify:quality": "pnpm check && pnpm test && pnpm test:e2e && pnpm build:frontend && pnpm audit:privacy && pnpm audit:prod",
+    "audit:all": "pnpm audit --audit-level high",
+    "verify:quality": "pnpm check && pnpm test && pnpm test:e2e && pnpm build:frontend && pnpm audit:privacy && pnpm audit:all",
     "verify": "pnpm generate-fixtures && pnpm verify:quality && pnpm test:real && cargo build --manifest-path src-tauri/Cargo.toml --release"
   },
   "dependencies": {

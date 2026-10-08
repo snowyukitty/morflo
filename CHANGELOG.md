@@ -20,6 +20,8 @@
 - The version badge reads the package version instead of a hard-coded 0.1.
 - Windows packaging validates the current version's installer while preserving
   older installer artifacts in the same output directory.
+- Patched development-tool transitive dependencies and expanded the quality
+  gate's npm audit to include development dependencies.
 - README and distribution guidance distinguish built-in images from optional
   media-engine capabilities and no longer treat the application license as undecided.
 

@@ -43,11 +43,14 @@ pnpm package:reviewed-engine --dir <explicit-absolute-directory> --expected-mani
 pnpm package:inspect-engine-free --dir <explicit-absolute-installed-directory>
 pnpm generate-fixtures
 pnpm audit:prod
+pnpm audit:all
 pnpm verify:quality
 pnpm verify
 ```
 
 Run `pnpm verify:quality` for the reproducible local/hosted quality contract.
+It audits development and production npm dependencies, failing on high-severity
+advisories. `pnpm audit:prod` remains available for a runtime-only assessment.
 Run `pnpm verify` before a release checkpoint. Real-engine checks require
 compatible `ffmpeg` and `ffprobe` executables on `PATH` or in a documented
 Morflo engine location.

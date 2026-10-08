@@ -898,7 +898,7 @@ Evidence boundary:
 
 Checks completed on 2026-10-09:
 
-- `pnpm verify` passed, including the unmodified `pnpm verify:quality` contract:
+- `pnpm verify` passed, including the `pnpm verify:quality` contract:
   - Formatting, generated Windows handlers, ESLint, TypeScript, Rust fmt and
     Clippy passed, including the standard debug-profile Rust checks.
   - 31 frontend tests, 58 Rust unit tests, 11 engine-free integration tests and
@@ -940,6 +940,30 @@ Checks completed on 2026-10-09:
   - Single-instance Open with and relative-path intake: first arrival 961 ms,
     clean secondary exits and unchanged source hashes.
 - Post-package privacy audit passed again against the Windows frontend bundle.
+
+Dependency-audit follow-up:
+
+- A full npm audit found 18 development-dependency advisories that the earlier
+  production-only scan excluded. Updated only four transitive versions within
+  their parents' supported ranges: `brace-expansion` 1.1.21 and 5.0.12,
+  `source-map-js` 1.2.2, and `undici` 8.11.2. No runtime dependency was added.
+- `pnpm audit:all` now reports no known npm vulnerabilities. The quality contract
+  uses this broader check; `audit:prod` remains available for runtime assessment.
+  Advisory references include
+  [source-map-js](https://github.com/advisories/GHSA-68fv-2mgg-jv7q),
+  [brace-expansion](https://github.com/advisories/GHSA-q2hr-2g5m-vwhr), and
+  [undici](https://github.com/advisories/GHSA-rfgv-xxqx-mfg5).
+- The separate Linux GTK/GLib advisory below remains unresolved. Rechecked
+  `cargo tree --target x86_64-pc-windows-msvc -i glib`: nothing in the Windows
+  dependency graph.
+- Reran the complete `pnpm verify` after the patches and broader audit: passed,
+  with the same test counts and documented skips above. Real process-tree
+  cancellation passed again in 1,280 ms; optimized Windows compilation passed.
+- Rebuilt the Windows-targeted frontend after dependency updates and compared
+  SHA-256 for every output file with the tested installer build: all files were
+  byte-identical. The post-rebuild privacy audit passed. App code, Rust
+  dependencies and runtime npm dependencies did not change in this follow-up,
+  so the installed-package evidence above remains applicable.
 
 Evidence limits:
 

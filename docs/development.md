@@ -60,6 +60,7 @@ pnpm package:inspect-engine-free --dir C:\absolute\installed\Morflo
 pnpm measure:performance   # local engine and frontend observations
 pnpm audit:privacy         # production source, dependencies, and CSP audit
 pnpm audit:prod            # production dependency advisories at high severity
+pnpm audit:all             # development + production advisories at high severity
 pnpm verify:quality        # reproducible gate; no media engine required
 pnpm verify                # full local gate, real engine, and release build
 ```
