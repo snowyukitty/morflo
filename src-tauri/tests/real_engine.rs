@@ -374,25 +374,30 @@ async fn webp_avif_and_multiresolution_ico_use_real_engine() {
         .await
         .expect("discover compatible real engine");
     let webp = run_image_conversion(&engine, &transparent_source, OutputFormat::Webp).await;
-    let avif = run_image_conversion(&engine, &transparent_source, OutputFormat::Avif).await;
     let ico_from_png = run_image_conversion(&engine, &transparent_source, OutputFormat::Ico).await;
     let ico_from_jpeg = run_image_conversion(&engine, &jpeg_source, OutputFormat::Ico).await;
     let ico_from_webp = run_image_conversion(&engine, &webp, OutputFormat::Ico).await;
-    let avif_roundtrip = run_image_conversion(&engine, &avif, OutputFormat::Png).await;
 
     let webp_probe = inspect_path(&engine, &webp)
         .await
         .expect("probe WebP output");
-    let avif_probe = inspect_path(&engine, &avif)
-        .await
-        .expect("probe AVIF output");
-    let roundtrip_probe = inspect_path(&engine, &avif_roundtrip)
-        .await
-        .expect("probe AVIF alpha roundtrip");
     assert_eq!(webp_probe.media.has_alpha, Some(true));
-    assert_eq!(avif_probe.media.has_alpha, Some(true));
-    assert!(avif_probe.alpha_stream_index.is_some());
-    assert_eq!(roundtrip_probe.media.has_alpha, Some(true));
+
+    if engine.supports(OutputFormat::Avif) {
+        let avif = run_image_conversion(&engine, &transparent_source, OutputFormat::Avif).await;
+        let avif_roundtrip = run_image_conversion(&engine, &avif, OutputFormat::Png).await;
+
+        let avif_probe = inspect_path(&engine, &avif)
+            .await
+            .expect("probe AVIF output");
+        let roundtrip_probe = inspect_path(&engine, &avif_roundtrip)
+            .await
+            .expect("probe AVIF alpha roundtrip");
+        assert_eq!(avif_probe.media.has_alpha, Some(true));
+        assert!(avif_probe.alpha_stream_index.is_some());
+        assert_eq!(roundtrip_probe.media.has_alpha, Some(true));
+    }
+
     for ico in [&ico_from_png, &ico_from_jpeg, &ico_from_webp] {
         assert_eq!(
             stream_dimensions(&engine, ico).await,
@@ -759,7 +764,12 @@ async fn bounded_media_previews_are_decodable_and_resized() {
         assert_eq!(frame_probe.media.height, Some(90));
     }
 
-    let output_thumbnail = render_output_thumbnail(&engine, &fixture_root.join("sample.avif"))
+    let thumbnail_source = if fixture_root.join("sample.avif").is_file() {
+        fixture_root.join("sample.avif")
+    } else {
+        fixture_root.join("transparent-grid.png")
+    };
+    let output_thumbnail = render_output_thumbnail(&engine, &thumbnail_source)
         .await
         .expect("render a bounded completed-image preview");
     assert_eq!(output_thumbnail.mime_type, "image/png");

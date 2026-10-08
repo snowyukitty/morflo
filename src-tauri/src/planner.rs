@@ -214,9 +214,14 @@ fn plan_video(
             ));
         }
     }
+    let (fps_flag, fps_val) = if engine.is_legacy_ffmpeg() {
+        ("-vsync", "vfr")
+    } else {
+        ("-fps_mode", "vfr")
+    };
     args.extend([
-        OsString::from("-fps_mode"),
-        OsString::from("vfr"),
+        OsString::from(fps_flag),
+        OsString::from(fps_val),
         OsString::from("-max_muxing_queue_size"),
         OsString::from("2048"),
         OsString::from("-stats_period"),

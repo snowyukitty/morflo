@@ -5,6 +5,7 @@ import { spawnSync } from "node:child_process";
 import { processIdsForExecutable, runPowerShellJson } from "./lib/native-windows.mjs";
 
 const repositoryRoot = resolve(import.meta.dirname, "..");
+const packageJson = JSON.parse(await readFile(resolve(repositoryRoot, "package.json"), "utf8"));
 const defaultInstaller = resolve(
   repositoryRoot,
   "src-tauri",
@@ -12,7 +13,7 @@ const defaultInstaller = resolve(
   "release",
   "bundle",
   "nsis",
-  "Morflo_0.2.1_x64-setup.exe",
+  `Morflo_${packageJson.version}_x64-setup.exe`,
 );
 const defaultInstalledApp = resolve(process.env.LOCALAPPDATA ?? "", "Morflo", "morflo.exe");
 const installerPath = resolve(process.env.MORFLO_NATIVE_INSTALLER ?? defaultInstaller);

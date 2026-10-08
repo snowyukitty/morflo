@@ -109,11 +109,14 @@ Invoke-Ffmpeg @(
   "-c:v", "png", "-frames:v:0", "1", "-frames:v:1", "1", "-frames:v:2", "1", "-frames:v:3", "1", "-f", "ico", $ico
 )
 
-$avif = Join-Path $output "sample.avif"
-Invoke-Ffmpeg @(
-  "-hide_banner", "-loglevel", "error", "-y", "-i", $opaqueJpeg,
-  "-frames:v", "1", "-c:v", "libaom-av1", "-still-picture", "1", "-crf", "30", "-b:v", "0", "-cpu-used", "6", "-f", "avif", $avif
-)
+$hasAvif = [bool]((& $ffmpeg.Source -hide_banner -formats) -match "\bE\s+avif\b")
+if ($hasAvif) {
+  $avif = Join-Path $output "sample.avif"
+  Invoke-Ffmpeg @(
+    "-hide_banner", "-loglevel", "error", "-y", "-i", $opaqueJpeg,
+    "-frames:v", "1", "-c:v", "libaom-av1", "-still-picture", "1", "-crf", "30", "-b:v", "0", "-cpu-used", "6", "-f", "avif", $avif
+  )
+}
 
 $animatedPng = Join-Path $output "animated-input.png"
 Invoke-Ffmpeg @(
@@ -181,9 +184,10 @@ Invoke-Ffmpeg @(
 )
 
 $vfrMkv = Join-Path $output "variable-frame-rate.mkv"
+$fpsArgs = if ((& $ffmpeg.Source -hide_banner -h) -match "\bfps_mode\b") { @("-fps_mode", "vfr") } else { @("-vsync", "vfr") }
 Invoke-Ffmpeg @(
   "-hide_banner", "-loglevel", "error", "-y", "-f", "lavfi", "-i", "testsrc2=s=480x270:r=30:d=3",
-  "-vf", "select='not(mod(n,2))+not(mod(n,5))'", "-fps_mode", "vfr", "-an",
+  "-vf", "select='not(mod(n,2))+not(mod(n,5))'", $fpsArgs[0], $fpsArgs[1], "-an",
   "-c:v", "libx264", "-preset", "ultrafast", "-crf", "25", "-pix_fmt", "yuv420p", $vfrMkv
 )
 
@@ -213,7 +217,9 @@ Assert-Probeable $unusualPng
 Assert-Probeable $bmp
 Assert-Probeable $tiff
 Assert-Probeable $ico
-Assert-Probeable $avif
+if ($hasAvif) {
+  Assert-Probeable $avif
+}
 Assert-Probeable $animatedPng
 Assert-Probeable $shortMp4
 Assert-Probeable $portraitMov
@@ -225,4 +231,7 @@ Assert-Probeable $gifSource
 Assert-Probeable (Join-Path $unicodeDirectory "轉換 🧳 O'Reilly.png")
 
 Write-Output "Generated image and video fixtures in $output"
+if (-not $hasAvif) {
+  Write-Output "AVIF fixture: skipped (the detected FFmpeg build has no AVIF muxer)"
+}
 Write-Output "HEIC/HEIF fixture: skipped (the detected FFmpeg build has no HEIF muxer)"

@@ -80,6 +80,18 @@ impl EngineRuntime {
         self.media.is_some()
     }
 
+    /// Whether the detected FFmpeg is an older major line (< 6.0) that uses
+    /// legacy option names (e.g., `-vsync` instead of `-fps_mode`).
+    pub fn is_legacy_ffmpeg(&self) -> bool {
+        self.registry
+            .engine
+            .version
+            .as_deref()
+            .and_then(|v| v.split('.').next())
+            .and_then(|major| major.parse::<u32>().ok())
+            .is_some_and(|major| major < 6)
+    }
+
     pub fn supports(&self, format: OutputFormat) -> bool {
         self.registry
             .outputs

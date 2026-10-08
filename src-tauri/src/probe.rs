@@ -106,16 +106,25 @@ pub async fn inspect_path(
 
     let output = run_ffprobe(engine, &path).await?;
     if !output.status.success() {
+        if let Ok(inspected) = native_inspection(path.clone(), metadata.len()) {
+            return Ok(inspected);
+        }
         return Err(map_probe_failure(&output.stderr, &path));
     }
-    let probe: RawProbe = serde_json::from_slice(&output.stdout).map_err(|error| {
-        ConversionError::new(
-            ConversionErrorCode::DamagedInput,
-            "This file could not be inspected",
-            "The media engine returned incomplete information for this file.",
-        )
-        .with_details(error.to_string())
-    })?;
+    let probe: RawProbe = match serde_json::from_slice(&output.stdout) {
+        Ok(probe) => probe,
+        Err(error) => {
+            if let Ok(inspected) = native_inspection(path.clone(), metadata.len()) {
+                return Ok(inspected);
+            }
+            return Err(ConversionError::new(
+                ConversionErrorCode::DamagedInput,
+                "This file could not be inspected",
+                "The media engine returned incomplete information for this file.",
+            )
+            .with_details(error.to_string()));
+        }
+    };
 
     normalize_probe(path, metadata.len(), probe)
 }
@@ -174,11 +183,15 @@ fn validate_source(path: &Path) -> Result<std::path::PathBuf, ConversionError> {
     dunce::canonicalize(path).map_err(map_source_io_error)
 }
 
-async fn run_ffprobe(
-    engine: &EngineRuntime,
+const SHOW_ENTRIES_MODERN: &str = "format=format_name,duration:format_tags=major_brand:stream=index,codec_type,codec_name,width,height,pix_fmt,duration,nb_frames,color_transfer:stream_tags=rotate,title:stream_disposition=attached_pic:stream_side_data=rotation:frame=stream_index:frame_side_data=rotation:chapter=id";
+const SHOW_ENTRIES_LEGACY: &str = "format=format_name,duration:format_tags=major_brand:stream=index,codec_type,codec_name,width,height,pix_fmt,duration,nb_frames,color_transfer:stream_tags=rotate,title:stream_disposition=attached_pic:frame=stream_index:chapter=id";
+
+async fn execute_ffprobe_with_entries(
+    ffprobe_path: &Path,
     path: &Path,
+    show_entries: &str,
 ) -> Result<std::process::Output, ConversionError> {
-    let mut command = crate::engine_process::engine_command(&engine.media()?.ffprobe);
+    let mut command = crate::engine_process::engine_command(ffprobe_path);
     command
         .args([
             "-v",
@@ -192,7 +205,7 @@ async fn run_ffprobe(
             "%+#1",
             "-show_frames",
             "-show_entries",
-            "format=format_name,duration:format_tags=major_brand:stream=index,codec_type,codec_name,width,height,pix_fmt,duration,nb_frames,color_transfer:stream_tags=rotate,title:stream_disposition=attached_pic:stream_side_data=rotation:frame=stream_index:frame_side_data=rotation:chapter=id",
+            show_entries,
         ])
         .arg(path)
         .stdin(Stdio::null())
@@ -212,6 +225,24 @@ async fn run_ffprobe(
             "The file may be damaged, incomplete, or on an unavailable drive.",
         )),
     }
+}
+
+async fn run_ffprobe(
+    engine: &EngineRuntime,
+    path: &Path,
+) -> Result<std::process::Output, ConversionError> {
+    let ffprobe_path = &engine.media()?.ffprobe;
+    let output = execute_ffprobe_with_entries(ffprobe_path, path, SHOW_ENTRIES_MODERN).await?;
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        if stderr.contains("stream_side_data")
+            || stderr.contains("frame_side_data")
+            || stderr.contains("show_entries")
+        {
+            return execute_ffprobe_with_entries(ffprobe_path, path, SHOW_ENTRIES_LEGACY).await;
+        }
+    }
+    Ok(output)
 }
 
 /// Inspect an image with Morflo's built-in engine, for machines that have no
@@ -789,5 +820,29 @@ mod tests {
 
         assert!(validated.is_absolute());
         assert!(!validated.to_string_lossy().starts_with(r"\\?\"));
+    }
+
+    #[test]
+    fn parses_legacy_probe_json_without_stream_side_data() {
+        let json = r#"{
+            "streams": [
+                {
+                    "index": 0,
+                    "codec_name": "png",
+                    "codec_type": "video",
+                    "width": 100,
+                    "height": 100,
+                    "pix_fmt": "rgba",
+                    "disposition": { "attached_pic": 0 }
+                }
+            ],
+            "format": { "format_name": "png_pipe" },
+            "chapters": [],
+            "frames": [{ "stream_index": 0 }]
+        }"#;
+        let probe: RawProbe = serde_json::from_str(json).expect("deserialize legacy probe");
+        assert_eq!(probe.streams.len(), 1);
+        assert_eq!(probe.streams[0].width, Some(100));
+        assert_eq!(probe.streams[0].pix_fmt, Some("rgba".to_owned()));
     }
 }

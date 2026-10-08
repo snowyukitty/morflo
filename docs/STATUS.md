@@ -1,24 +1,19 @@
 # Morflo status
 
-Last updated: 2026-09-03
+Last updated: 2026-10-09
 
 ## Current gate
 
-Gate 8 — released locally as unsigned 0.2.0. Morflo no longer requires a local
-media engine to be useful: a built-in, redistributable image engine covers the
-first three product jobs, so a computer without FFmpeg converts images,
-batches and favicons instead of reaching a dead end (ADR 0007).
+Gate 9 — released locally as unsigned 0.2.2. Morflo provides backward-compatible
+media engine probing and video planning for FFmpeg < 6.0 (including 5.0.1),
+coupled with built-in native image inspection fallbacks so host media engine
+discrepancies never block format selection or image conversions.
 
-Gate 7 remains complete: native Windows first-run readiness, outcome
-confidence, GIF moment confidence, and restrained Open with intake, with
-reviewed-sidecar intake and secure unreviewed candidate dossiers technically
-ready. The private GitHub checkpoint is established and the project is registered in
-the owner's private control plane;
-hosted platform compilation has not run.
-
-Public distribution remains blocked by the explicit constraints below. The
-engine license decision is no longer what stands between a new user and a
-working application; it now only governs video, animated GIF, WebP and AVIF.
+Gate 8 and Gate 7 remain complete: built-in redistributable image engine, native
+Windows first-run readiness, outcome confidence, GIF moment confidence, and
+restrained Open with intake, with reviewed-sidecar intake and secure unreviewed
+candidate dossiers technically ready. The private GitHub checkpoint is
+established and synchronization to public Morflo is documented.
 
 ## Baseline
 
@@ -838,6 +833,42 @@ Decode-budget fix and 0.2.1:
 - `pnpm package` produced unsigned `Morflo_0.2.1_x64-setup.exe`; silent install
   exited 0; the installed executable reports 0.2.1; engine-free inspection still
   finds exactly four files; and all three installed-app journeys exit 0.
+
+### Gate 9 — legacy FFmpeg backward compatibility, native fallback, and 0.2.2
+
+- Diagnosed and resolved the `stream_side_data` probe failure on host machines running
+  FFmpeg/FFprobe < 6.0 (e.g., 5.0.1). FFprobe prior to 6.0 does not recognize
+  `stream_side_data` and `frame_side_data` sections in `-show_entries` and exits with
+  `Invalid argument`.
+- Added dynamic probe retry with `SHOW_ENTRIES_LEGACY` in `run_ffprobe` to preserve
+  complete metadata extraction across both modern (6.x+) and legacy (4.x/5.x)
+  FFprobe builds.
+- Added native image inspection fallback: if external media engine inspection fails or
+  returns invalid output for supported image formats, Morflo falls back to pure-Rust
+  `native_inspection`, ensuring zero-dependency resilience for images and preventing
+  blocked format selection or conversion failures.
+- Added engine-aware frame synchronization flag selection (`-vsync vfr` for legacy
+  FFmpeg < 6.0 and `-fps_mode vfr` for modern builds), preventing video conversion
+  failures on legacy engines.
+- Adapted fixture generation (`scripts/generate-fixtures.ps1`) to probe for AVIF
+  muxer and `-fps_mode` availability dynamically, preventing fixture generation
+  failures on older FFmpeg installations.
+- Updated `scripts/test-open-with-installer-windows.mjs` to resolve the current installer
+  version dynamically from `package.json`.
+- Verified clean across the complete quality and release contract:
+  - `pnpm verify:quality` passed: 58 Rust unit tests, 9 engine-free integration tests,
+    8 Playwright E2E tests, 24 Vitest tests, 17 engine verifier tests, strict
+    formatting/lint/typecheck, privacy audit (32 files), and zero npm advisories.
+  - `pnpm test:real` passed: 11 real-engine integration tests against host FFmpeg 5.0.1,
+    including real process-tree cancellation (694 ms).
+  - All four native Windows release journeys passed: `test:native:windows` (3,357 ms),
+    `test:native:gif:windows` (3,682 ms), `test:native:cancel:windows` (1,879 ms),
+    `test:native:open-with:windows` (887 ms arrival).
+  - Installer Open with lifecycle test passed: install, uninstall, and reinstall across
+    all 13 conservative extensions with byte-for-byte Desktop shortcut restoration and
+    `UserChoice` preservation.
+  - Packaged unsigned Windows installer `Morflo_0.2.2_x64-setup.exe` in 1 round (50.55s),
+    silently installed and verified installed `morflo.exe` reports version 0.2.2.
 
 Evidence boundary:
 
