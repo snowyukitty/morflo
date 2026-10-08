@@ -1011,6 +1011,45 @@ input:disabled {
   gap: 6px;
 }
 
+.image-outcomes {
+  display: grid;
+  gap: 6px;
+}
+
+.image-outcome {
+  display: grid;
+  gap: 4px;
+  min-height: 52px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  color: var(--ink-secondary);
+  background: var(--surface-raised);
+  text-align: left;
+}
+
+.image-outcome:hover:not(:disabled),
+.image-outcome[aria-pressed="true"] {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--line));
+  color: var(--accent-ink);
+  background: var(--accent-soft);
+}
+
+.image-outcome > span {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 680;
+}
+
+.image-outcome > small {
+  color: var(--ink-secondary);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
 .format-choice,
 .outcome-choice {
   position: relative;

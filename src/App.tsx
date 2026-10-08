@@ -39,6 +39,7 @@ import {
 } from "react";
 
 import morfloMarkUrl from "../master.svg?url";
+import { version as appVersion } from "../package.json";
 import { copy } from "./i18n/en";
 import {
   cancelJob,
@@ -80,7 +81,12 @@ import {
   formatMomentTime,
 } from "./lib/format";
 import { loadPreferences, savePreferences, type PreferencesV1 } from "./lib/preferences";
-import { recommendedImageOutput } from "./lib/recommendations";
+import {
+  imageOutcomes,
+  imageOutcomeSettings,
+  matchesImageOutcome,
+  recommendedImageOutput,
+} from "./lib/recommendations";
 import type {
   CapabilityRegistry,
   CollisionPolicy,
@@ -146,13 +152,14 @@ function settingsFor(
   file: MediaFile,
   demoState: string | null,
   preferences: PreferencesV1,
+  capabilities: CapabilityRegistry,
 ): ConversionSettings {
   const settings = structuredClone(defaultSettings);
   settings.collisionPolicy = preferences.collisionPolicy;
   settings.image.metadata = preferences.imageMetadata;
   settings.video.metadata = preferences.videoMetadata;
   if (file.kind === "image") {
-    settings.image.outputFormat = recommendedImageOutput(file);
+    settings.image.outputFormat = recommendedImageOutput(file, capabilities) ?? "jpeg";
   }
   if (file.kind === "video" && file.durationSeconds !== undefined) {
     settings.gif.startSeconds = 0;
@@ -173,6 +180,20 @@ export function App() {
   const initialPreferences = useMemo(() => loadPreferences(), []);
   const [preferences, setPreferences] = useState<PreferencesV1>(initialPreferences);
   const initialFiles = useMemo(() => getDemoFiles(demoState), [demoState]);
+  const initialCapabilities = useMemo(
+    () =>
+      demoState
+        ? demoState === "engine-missing"
+          ? missingDemoCapabilities
+          : demoState === "engine-native"
+            ? nativeDemoCapabilities
+            : demoCapabilities
+        : {
+            engine: { available: false, name: copy.engineName, source: "missing" as const },
+            outputs: [],
+          },
+    [demoState],
+  );
   const [files, setFiles] = useState<MediaFile[]>(initialFiles);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(
     () =>
@@ -186,18 +207,13 @@ export function App() {
   );
   const [settingsById, setSettingsById] = useState<Record<string, ConversionSettings>>(() =>
     Object.fromEntries(
-      initialFiles.map((file) => [file.id, settingsFor(file, demoState, initialPreferences)]),
+      initialFiles.map((file) => [
+        file.id,
+        settingsFor(file, demoState, initialPreferences, initialCapabilities),
+      ]),
     ),
   );
-  const [capabilities, setCapabilities] = useState<CapabilityRegistry>(() =>
-    demoState
-      ? demoState === "engine-missing"
-        ? missingDemoCapabilities
-        : demoState === "engine-native"
-          ? nativeDemoCapabilities
-          : demoCapabilities
-      : { engine: { available: false, name: copy.engineName, source: "missing" }, outputs: [] },
-  );
+  const [capabilities, setCapabilities] = useState<CapabilityRegistry>(initialCapabilities);
   const [theme, setTheme] = useState<Theme>(() => {
     const explicit = query.get("theme");
     if (explicit === "light" || explicit === "dark") return explicit;
@@ -304,12 +320,16 @@ export function App() {
       setBusyAdding(true);
       setLiveMessage(copy.live.inspectingFiles(paths.length));
       try {
-        const inspected = await inspectFiles(paths);
+        const [inspected, registry] = await Promise.all([
+          inspectFiles(paths),
+          getCapabilities(),
+        ]);
+        setCapabilities(registry);
         setFiles((current) => [...current, ...inspected]);
         setSettingsById((current) => ({
           ...current,
           ...Object.fromEntries(
-            inspected.map((file) => [file.id, settingsFor(file, null, preferences)]),
+            inspected.map((file) => [file.id, settingsFor(file, null, preferences, registry)]),
           ),
         }));
         setSelectedIds(new Set(inspected[0] ? [inspected[0].id] : []));
@@ -703,14 +723,18 @@ export function App() {
       );
       setLiveMessage(copy.live.inspectingAgain(file.name));
       try {
-        const inspected = await retryInspection(id);
+        const [inspected, registry] = await Promise.all([
+          retryInspection(id),
+          getCapabilities(),
+        ]);
+        setCapabilities(registry);
         setFiles((current) =>
           current.map((candidate) => (candidate.id === id ? inspected : candidate)),
         );
         if (inspected.status === "ready") {
           setSettingsById((current) => ({
             ...current,
-            [id]: settingsFor(inspected, null, preferences),
+            [id]: settingsFor(inspected, null, preferences, registry),
           }));
           setLiveMessage(copy.live.fileReady(inspected.name));
         } else {
@@ -964,7 +988,7 @@ function AppHeader({
       <div className="brand-lockup" aria-label={copy.accessibility.appName}>
         <img className="brand-mark" src={morfloMarkUrl} alt="" />
         <span className="wordmark">{copy.wordmark}</span>
-        <span className="version-mark">0.1</span>
+        <span className="version-mark">{appVersion}</span>
       </div>
       <div className="privacy-note">
         <ShieldCheck size={15} aria-hidden="true" />
@@ -1511,6 +1535,61 @@ function ImageInspector({
           <span>{copy.image.localPreview}</span>
         </div>
       ) : null}
+      <SettingGroup title={copy.image.outcomeTitle}>
+        <div className="image-outcomes" role="group" aria-label={copy.image.outcomeTitle}>
+          {imageOutcomes.map((outcome) => {
+            const candidate = imageOutcomeSettings(outcome, file, settings, capabilities);
+            const selected = Boolean(candidate && matchesImageOutcome(settings, candidate));
+            const description = candidate
+              ? outcome === "share"
+                ? candidate.resizeMode === "contain"
+                  ? copy.image.shareResized
+                  : copy.image.shareOriginal
+                : outcome === "smaller"
+                  ? candidate.outputFormat === "png"
+                    ? copy.image.smallerPng
+                    : candidate.outputFormat === "webp"
+                      ? copy.image.smallerWebp
+                      : copy.image.smallerJpeg
+                  : copy.image.transparentDescription
+              : outcome === "transparent" && !file.hasAlpha
+                ? copy.image.noTransparency
+                : copy.image.outcomeUnavailable;
+            return (
+              <button
+                key={outcome}
+                type="button"
+                className="image-outcome"
+                aria-label={copy.image.outcomes[outcome]}
+                aria-describedby={`image-outcome-${outcome}-description`}
+                disabled={!candidate}
+                aria-pressed={selected}
+                onClick={() =>
+                  onSettings((all, current) => {
+                    if (current.kind === "image") {
+                      const next = imageOutcomeSettings(
+                        outcome,
+                        current,
+                        all.image,
+                        capabilities,
+                      );
+                      if (next) all.image = next;
+                    }
+                    return all;
+                  })
+                }
+              >
+                <span>
+                  {copy.image.outcomes[outcome]}
+                  {selected ? <Check size={13} aria-hidden="true" /> : null}
+                </span>
+                <small id={`image-outcome-${outcome}-description`}>{description}</small>
+              </button>
+            );
+          })}
+        </div>
+        <p className="field-note">{copy.image.outcomeNote}</p>
+      </SettingGroup>
       <SettingGroup title={copy.image.outputFormat} hint={copy.image.recommended}>
         <div className="format-grid">
           {formats.map((format) => {
@@ -1532,6 +1611,7 @@ function ImageInspector({
                 className={`format-choice${settings.outputFormat === format ? " is-selected" : ""}`}
                 type="button"
                 disabled={!available}
+                aria-pressed={settings.outputFormat === format}
                 title={!available ? capability?.reason : undefined}
                 aria-label={
                   description ? `${outputLabels[format]}. ${description}` : outputLabels[format]

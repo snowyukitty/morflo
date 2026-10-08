@@ -1,5 +1,10 @@
 # Release checklist
 
+This checklist records cumulative evidence, including earlier package versions.
+Use [status](../STATUS.md) for the exact checks run at the current checkpoint.
+Earlier Linux packages do not validate the 0.3.0 image outcomes; signing and
+clean-machine first-use evidence remain separate distribution requirements.
+
 ## Product
 
 - [x] All ten acceptance scenarios have recorded evidence or an explicit blocker.
@@ -22,10 +27,9 @@
 
 ## Engineering and privacy
 
-- [x] Frontend, privacy, native Windows release-profile Rust/Clippy, real-engine,
-      cancellation, and Playwright gates pass. The standard fresh debug-profile
-      `pnpm check` Rust step remains explicitly blocked by App Control rather
-      than being called passed.
+- [x] Frontend, privacy, Rust fmt/Clippy, real-engine, cancellation and Playwright
+      gates pass at Gate 10. The standard debug-profile `pnpm check` Rust step
+      passed in this checkpoint; earlier App Control refusals remain historical.
 - [x] No user-controlled shell strings, broad frontend filesystem permission, remote runtime assets, analytics, crash upload, or updater.
 - [x] CSP and Tauri capabilities are restrictive.
 - [x] npm production advisory/license and Cargo license metadata audits reviewed; RustSec remains explicitly blocked rather than called passed.

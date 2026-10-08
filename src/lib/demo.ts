@@ -229,7 +229,7 @@ export const nativeDemoCapabilities: CapabilityRegistry = {
   engine: {
     available: true,
     name: "Morflo built-in image engine",
-    version: "0.2.0",
+    version: "0.3.0",
     source: "native",
     diagnostic: "No development or system engine pair was found",
   },
@@ -267,6 +267,7 @@ export const nativeDemoCapabilities: CapabilityRegistry = {
 };
 
 export function getDemoFiles(state: string | null): MediaFile[] {
+  if (state === "engine-native") return structuredClone(files.queue.slice(0, 2));
   if (state === "batch") return structuredClone(batchFiles);
   if (state === "partial") {
     const completedFile = files.complete.at(1);

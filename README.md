@@ -1,279 +1,103 @@
 # Morflo
 
-Morflo is a calm, local-first desktop converter for common image and video work.
-Its primary flow is deliberately short: drop files, understand the recommended
-result, convert, then reveal the output.
+**Convert, resize, and compress images on your Windows desktop. Your files stay local.**
 
-The focused video-to-GIF workbench shows seven real local source moments on one
-accessible Start/End rail, offers a bounded clip preview, and returns a measured
-animated-output receipt without becoming a timeline editor.
+Morflo helps you prepare a photo for sharing, turn WebP into PNG, convert PNG to
+JPEG, or process a batch without touching the originals. Common image work uses
+an image engine built into the app: no account, upload, or FFmpeg setup required.
+Video conversion and animated GIF creation use a compatible locally installed
+FFmpeg/ffprobe pair when one is available.
 
-On Windows, the installer adds Morflo as a restrained **Open with** candidate
-for 13 verified/common media extensions. It never takes over a file type or
-changes the user's existing default. Files opened while Morflo is already
-running join the same inspected queue instead of opening another window.
+[Getting started](docs/guides/getting-started.md) ·
+[Compress images](docs/guides/compress-images-offline.md) ·
+[Supported formats](#supported-formats) ·
+[Roadmap](docs/product/roadmap.md) ·
+[Contribute](CONTRIBUTING.md)
 
-Morflo is not a cloud converter, media editor, document converter, downloader,
-or codec control panel. It has no accounts, analytics, advertising,
-subscriptions, crash uploads, or conversion-time network dependency.
+![Morflo image sharing options in the light theme](docs/assets/image-sharing.png)
 
-## Privacy and output safety
+_The app interface with illustrative sample files; the displayed source sizes
+are sample data, not compression measurements._
 
-- File contents, names, thumbnails, metadata, and paths stay on the device.
-- Source files are immutable.
-- The default collision policy appends a numeric suffix; replacement is never
-  silent.
-- Work is written beside the destination as an owned `.morflo-part` file and is
-  published only after successful encoding and output probing.
-- Recognized abandoned partials are tracked in a private, bounded recovery
-  journal and cleaned on the next launch.
-- The webview has no arbitrary shell or filesystem permission, and its CSP has
-  no external network destination.
-- Queue history and preview media are session-only. Only the selected preview is
+## Choose what you need
+
+- **Easy to share** prepares a balanced JPEG, fitting large images within
+  1920 × 1920 px without stretching or enlarging smaller images. Transparent
+  areas use the background you choose, with a visible warning.
+- **Smaller file** tries a smaller-quality JPEG for opaque images. Transparent
+  images use WebP when available, or alpha-preserving PNG with the built-in
+  engine. The actual result can be larger; the receipt tells you.
+- **Keep transparency** selects PNG at the original dimensions for images
+  with transparency.
+- **Batch processing** applies an outcome separately to compatible selected
+  images. Each file retains its metadata and animation choices.
+- **Measured results** show the actual output format, dimensions, bytes and
+  size change after conversion. Reveal the result directly in its folder.
+
+Manual format, quality and dimension controls remain available. Animated
+sources require an explicit first-frame choice before still-image conversion.
+
+## Availability
+
+The current source checkpoint is **0.3.0**. Windows 11 x64 is the primary target.
+A public installer has not been published; use the
+[development instructions](docs/development.md) to build from source.
+Local Windows installers are unsigned. A source checkpoint does not claim a
+signed, publicly distributed release.
+
+Linux has earlier local WSL2/WSLg package evidence. macOS has no completed
+runtime validation. See the [platform and release checklist](docs/quality/release-checklist.md).
+
+## Supported formats
+
+Availability comes from the active Rust capability registry. A filename
+extension alone never makes an output available.
+
+| Work                        | Built into Morflo                     | With a compatible local media engine                   |
+| --------------------------- | ------------------------------------- | ------------------------------------------------------ |
+| Read common images          | PNG, JPEG, WebP, GIF, BMP, TIFF, ICO  | Additional formats depend on the engine                |
+| Write images                | PNG, JPEG, multi-resolution ICO       | WebP and AVIF when validated encoders are available    |
+| Resize and batch images     | Yes                                   | Yes                                                    |
+| Preserve transparency       | PNG and ICO                           | PNG, WebP, AVIF and ICO as supported                   |
+| Keep source metadata        | Unavailable; choose Remove explicitly | Best-effort mapping, not byte-identical preservation   |
+| Convert video               | Unavailable                           | MP4 and WebM when required codecs are available        |
+| Create a short animated GIF | Unavailable                           | Local moment strip, range preview and palette pipeline |
+| HEIC/HEIF                   | Not verified                          | Not advertised as supported                            |
+
+WebP **input** works with the built-in engine even though WebP **output** needs
+a media engine. [Conversion evidence](docs/media/conversion-matrix.md) separates
+built-in tests from development-engine tests. No media-engine binary is included
+in the source repository or ordinary package.
+
+## Privacy and safe outputs
+
+- Media, names, paths, metadata and thumbnails stay on your device.
+- There are no accounts, ads, analytics, crash uploads or conversion-time
+  network calls. Runtime assets are local.
+- Original files stay unchanged. Existing outputs receive a numeric suffix
+  by default; replacement is never silent.
+- Output is written to an owned temporary file and published only after a
+  successful conversion and output inspection.
+- Queue history and previews are session-only. Only the selected preview is
   kept in memory.
-- Completion receipts use the re-probed final artifact for format, bytes,
-  dimensions, duration, and alpha state. Opaque outputs never receive a
-  transparency-style preview background.
+- On Windows, Morflo can be an **Open with** candidate for its conservative
+  handler set. It does not take over your default apps.
 
-## Verified development-engine matrix
+## Learn and help
 
-“Verified” means the real FFmpeg/ffprobe 8.1.2 development engine converted a
-locally generated fixture and Morflo probed the result. It does **not** mean an
-engine is bundled or legally cleared for redistribution.
-
-| Input                         | Output                      | Evidence status                        |
-| ----------------------------- | --------------------------- | -------------------------------------- |
-| PNG                           | JPEG, WebP, AVIF, ICO       | Verified, including alpha decisions    |
-| JPEG                          | PNG, WebP, ICO              | Verified                               |
-| WebP                          | PNG, JPEG, ICO              | Verified, including alpha              |
-| BMP, TIFF, ICO                | PNG/JPEG/WebP as applicable | Verified                               |
-| AVIF                          | PNG, JPEG, WebP             | Verified, including alpha round-trip   |
-| HEIC/HEIF                     | Common image outputs        | Capability-dependent; not verified     |
-| MOV, MKV, WebM                | MP4                         | Verified                               |
-| MP4                           | WebM                        | Verified                               |
-| MP4, MOV, WebM                | Animated GIF                | Verified with trimmed palette pipeline |
-| Other listed video containers | MP4/WebM                    | Capability-dependent; not verified     |
-
-See the [conversion matrix](docs/media/conversion-matrix.md) for exact fixture,
-stream, transparency, duration, cancellation, and batch evidence.
-
-## Development setup
-
-Required:
-
-- Node.js 24 and pnpm 11.17.0
-- Rust 1.93.1 or newer with the target platform toolchain
-- Tauri 2 platform prerequisites
-- A compatible `ffmpeg` and `ffprobe` pair for inspection and conversion
-
-Morflo accepts a bundled sidecar only when its manifest, independent compiled
-digest pin, files, exact versions, build configuration, full capability
-inventory, notices, source-offer evidence, and time-bounded approval all pass
-offline verification. A present invalid bundle is a package failure; automatic
-discovery does not silently fall through to a development engine. When no
-bundle is present, Morflo checks explicit project development paths and then a
-compatible engine on `PATH`. On Windows it also reads the current persistent
-machine/user `Path` values so a desktop shortcut is not stranded with
-Explorer's older inherited environment. Engine Diagnostics can check again or
-validate a fixed-name `ffmpeg`/`ffprobe` pair from a folder for the current
-session; the selected location is not persisted or represented as reviewed.
-Developers may set `MORFLO_FFMPEG_PATH` and `MORFLO_FFPROBE_PATH` for an explicit
-development pair. The frontend never chooses executable names, supplies engine
-arguments, or infers output support from extensions alone. Media-engine child
-processes receive a deliberately small environment without inherited search
-paths, homes, tokens, proxy settings, or unrelated application variables.
-
-```powershell
-pnpm install --frozen-lockfile
-pnpm generate-fixtures
-pnpm tauri:dev
-```
-
-Useful commands:
-
-```powershell
-pnpm check                 # formatting, lint, TypeScript, Rust fmt + Clippy
-pnpm test                  # frontend and Rust unit tests
-pnpm test:real             # ignored-by-default real-engine tests; no mocks
-pnpm test:e2e              # visual, accessibility, zoom, and responsiveness
-pnpm engine:verify --dir C:\absolute\reviewed-bundle
-                            # offline, explicit-directory intake verification
-pnpm engine:dossier --dir C:\absolute\candidate `
-  --out C:\absolute\evidence\candidate-dossier.json --allow-execution
-                            # deterministic, explicitly unreviewed candidate evidence
-pnpm test:native:windows   # release EXE + native WebView2 + real conversion
-pnpm test:native:gif:windows    # real moments, range preview, GIF, and receipt
-pnpm test:native:cancel:windows # real release encode + process-tree cleanup
-pnpm test:native:open-with:windows    # real second-process file handoff
-pnpm test:installer:open-with:windows # reversible registry install/uninstall audit
-pnpm build                 # frontend plus target-platform release binary
-pnpm package               # unsigned NSIS package on a compatible Windows host
-pnpm package:inspect-engine-free --dir C:\absolute\installed\Morflo
-                            # inspect an installed normal package tree
-pnpm measure:performance   # local engine and frontend observations
-pnpm audit:privacy         # production source, dependencies, and CSP audit
-pnpm audit:prod            # production dependency advisories at high severity
-pnpm verify:quality        # reproducible gate; no media engine required
-pnpm verify                # full local gate, real engine, and release build
-```
-
-### Candidate dossier boundary
-
-Before legal or distribution review, an operator can capture a deterministic
-technical dossier without constructing a reviewed manifest:
-
-```powershell
-pnpm engine:dossier `
-  --dir C:\absolute\candidate `
-  --out C:\absolute\evidence\candidate-dossier.json `
-  --allow-execution
-
-pnpm engine:dossier `
-  --dir C:\absolute\candidate `
-  --check C:\absolute\evidence\candidate-dossier.json `
-  --allow-execution
-```
-
-The command requires exact root `ffmpeg`/`ffprobe` names, inventories and hashes
-every regular file, records matching versions, configure line, compiler and
-library versions, and complete observed capabilities, then repeats the file
-inventory after probing. The JSON contains no absolute path or timestamp, is
-written only to an explicit new file outside the candidate, and is permanently
-marked `unreviewed`. It is a review input, not a manifest generator, trust pin,
-notice classifier, source offer, license conclusion, or packaging input.
-
-`--allow-execution` is intentionally mandatory: observing capabilities runs the
-candidate executables. Morflo supplies fixed arguments and a sanitized child
-environment, but does not claim to sandbox an unknown binary or prevent that
-binary from using the current user's OS permissions. Run it only after deciding
-that executing the exact candidate is appropriate in the current environment.
-
-On Windows, `pnpm package` uses a bounded App Control recovery wrapper. It may
-relink only the exact Cargo-generated build helper or proc-macro artifact named
-in an error, and only under `src-tauri/target/{release/build,release/deps}`. It
-does not elevate, weaken policy, trust a directory, or modify source files.
-Normal packaging clears any inherited reviewed-manifest pin and has no engine
-resource input, so it remains engine-free. A future reviewed bundle can be
-staged only through the explicit opt-in path below; the digest must come from a
-separate review of the exact manifest, not be copied automatically from the
-candidate during packaging:
-
-```powershell
-pnpm engine:verify --dir C:\absolute\reviewed-bundle
-pnpm package:reviewed-engine `
-  --dir C:\absolute\reviewed-bundle `
-  --expected-manifest-sha256 <64-lowercase-hex-reviewed-digest>
-```
-
-The opt-in command verifies before and after copying only manifest-declared
-files into an ephemeral Cargo target directory, embeds the digest pin, and adds
-that directory through a temporary Tauri resource overlay. It never searches
-`PATH`, WinGet locations, or other folders for packaging input. This technical
-gate does not approve a distributor, license, codec patent position, source
-offer, or release.
-
-On a Linux host or WSL checkout with Linux dependencies installed:
-
-```bash
-MORFLO_FFMPEG_PATH=/absolute/path/to/ffmpeg \
-MORFLO_FFPROBE_PATH=/absolute/path/to/ffprobe \
-./scripts/test-offline.sh
-
-pnpm tauri build --bundles deb
-./scripts/smoke-linux-package.sh /absolute/path/to/Morflo_0.1.0_amd64.deb
-```
-
-Fixture generation is deterministic and synthetic; no third-party media is
-downloaded or committed.
-
-## GitHub checkpoint workflow
-
-The private canonical repository uses a deliberately manual workflow so
-metered Windows and macOS runners are spent only when their result will change a
-decision. The Ubuntu quality job runs the same `pnpm verify:quality` contract as
-local development. Platform jobs start only after that gate passes, compile
-Windows x64, macOS Apple Silicon/Intel, and Linux x64 without bundling, and
-never publish or upload binaries.
-
-From an authorized checkout:
-
-```powershell
-gh workflow run quality-and-platforms.yml --ref main
-gh run watch --exit-status
-```
-
-Hosted compilation is evidence that source compiles for a target; it is not a
-claim that the application was packaged or interactively validated on that
-operating system.
-
-## Media-engine and licensing boundary
-
-No FFmpeg, ffprobe, gifski, or libvips binary is committed. The observed Gyan
-FFmpeg 8.1.2 `full_build` enables GPL components and reports GPLv3-or-later; it
-is used for non-redistributable local validation only and is not an eligible
-packaging input. Candidate dossier schema v1 records unreviewed observations;
-manifest schema v1 and the fail-closed intake gate establish technical
-readiness. Neither is legal approval. A public normal-use package remains
-blocked until the owner chooses an application-license strategy and an exact
-redistributable engine build receives provenance, configuration, checksum,
-codec, patent, source-offer, notice, and distribution review.
-
-See [media-engine distribution](docs/legal/media-engine-distribution.md) and
-[third-party notices](THIRD_PARTY_NOTICES.md).
-
-## Packaging and platform validation
-
-| Platform        | Actual evidence                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Windows 11 x64  | Native MSVC app and unsigned NSIS installer built on Windows 11 x64, Defender-scanned with zero detections, installed per-user, and verified through the delivered IconFlow shortcut. Ten real conversion cases plus the engine-discovery identity regression pass. Installed release-WebView journeys cover PNG → JPEG confidence, a real seven-frame GIF moment strip through decoded GIF receipt, 30-second MP4 → WebM cancellation, and single-window Open with intake. Installer evidence proves 13 alternate-handler registrations without changing existing defaults or `UserChoice`. |
-| Linux x64       | Unsigned `.deb` built and smoke-launched under WSL2 Ubuntu/WSLg. This is local WSL evidence, not a broad physical-Linux compatibility claim.                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
-| macOS arm64/x64 | Manual CI build structure exists; no build or runtime validation has been performed.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
-
-The primary local artifact is
-`src-tauri/target/release/bundle/nsis/Morflo_0.1.0_x64-setup.exe`. The Linux
-artifact remains at `artifacts/linux-x64/Morflo_0.1.0_amd64.deb`. Neither
-contains a media engine; both are unsigned and are not authorized for public
-distribution. Windows public distribution needs a trusted code-signing
-certificate; macOS needs Apple signing and notarization credentials.
-
-## Known limitations
-
-- Normal packaged conversion currently depends on a compatible locally
-  discoverable engine because no release sidecar is approved.
-- No reviewed manifest digest or media-engine binary is committed. The opt-in
-  packaging path is intentionally unusable until an exact bundle is separately
-  reviewed and supplied.
-- HEIC/HEIF is not verified on the observed engine.
-- HDR preservation is not guaranteed; detected HDR and unsupported streams are
-  warned before conversion.
-- ICC/EXIF preservation is best-effort across formats, not byte-identical.
-- Hardware encoders, audio extraction, deeper Explorer actions, automatic
-  updates, and custom reusable presets are intentionally deferred.
-- The Windows installer registers only a conservative Open with candidate set:
-  PNG, JPEG, WebP, BMP, TIFF, AVIF, ICO, MP4, MOV, MKV, and WebM. HEIC/HEIF and
-  unverified video containers are not advertised. The actual Explorer menu
-  selection gesture remains manually unverified on this host because the
-  desktop-control pipe was unavailable; registry lifecycle and real command-line
-  handoff through the installed app are automated and pass.
-- Native packaged automation is currently Windows-only. macOS and physical
-  Linux click-path validation remain unrun.
-
-## Architecture
-
-The frontend sends typed conversion intent. Rust owns validation, planning,
-process execution, truthful progress, resource-aware scheduling, cancellation,
-safe output finalization, recovery, and capability discovery. See the
-[architecture overview](docs/architecture/overview.md) and current
-[status](docs/STATUS.md).
+- [Convert PNG to JPEG and WebP to PNG](docs/guides/convert-images.md)
+- [Compress and resize images offline](docs/guides/compress-images-offline.md)
+- [Report a bug](https://github.com/snowyukitty/morflo/issues/new?template=bug_report.yml)
+- [Suggest an improvement](https://github.com/snowyukitty/morflo/issues/new?template=feature_request.yml)
+- [Security reporting](SECURITY.md)
+- [Build, test and package](docs/development.md)
+- [Changelog](CHANGELOG.md) and [roadmap](docs/product/roadmap.md)
 
 ## License
 
-Morflo is dual licensed under either [Apache-2.0](LICENSE-APACHE) or
-[MIT](LICENSE-MIT), at your option — the customary Rust-ecosystem license, and
-the same terms as every crate Morflo compiles. See [LICENSING.md](LICENSING.md).
-
-This covers Morflo's own source, including its built-in image engine. It does
-not cover FFmpeg: Morflo runs a locally installed `ffmpeg`/`ffprobe` as external
-programs and ships no media-engine binary, so an FFmpeg build's own terms bind
-whoever distributes that build. Third-party components are recorded in
-[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+Morflo's source, including its built-in image engine, is dual licensed under
+[MIT](LICENSE-MIT) OR [Apache-2.0](LICENSE-APACHE), at your option.
+See [LICENSING.md](LICENSING.md) and [third-party notices](THIRD_PARTY_NOTICES.md).
+An external FFmpeg build has its own terms. Redistributing an engine requires
+separate review of the exact build; see
+[media-engine distribution](docs/legal/media-engine-distribution.md).

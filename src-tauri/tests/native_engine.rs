@@ -159,6 +159,55 @@ async fn a_favicon_is_created_with_no_media_engine_installed() {
 }
 
 #[tokio::test]
+async fn a_jpeg_can_be_compressed_and_shared_without_touching_its_source() {
+    let directory = tempdir().expect("temporary test directory");
+    let source = directory.path().join("photo.jpg");
+    let image = RgbImage::from_fn(2400, 1800, |x, y| {
+        Rgb([
+            (x.wrapping_mul(13).wrapping_add(y.wrapping_mul(7)) % 256) as u8,
+            (x.wrapping_mul(3).wrapping_add(y.wrapping_mul(17)) % 256) as u8,
+            (x.wrapping_add(y.wrapping_mul(11)) % 256) as u8,
+        ])
+    });
+    let file = std::fs::File::create(&source).expect("create synthetic JPEG");
+    image::codecs::jpeg::JpegEncoder::new_with_quality(file, 98)
+        .encode_image(&image)
+        .expect("encode detailed source JPEG");
+    let source_digest = digest(&source);
+
+    let mut smaller = settings(OutputFormat::Jpeg);
+    smaller.image.quality = Quality::Smaller;
+    let compressed = convert_without_a_media_engine(&source, &smaller)
+        .await
+        .expect("same-format JPEG compression without FFmpeg");
+    assert_eq!(compressed.file_name().unwrap(), "photo (2).jpg");
+    let decoded = image::open(&compressed).expect("decode compressed JPEG");
+    assert_eq!((decoded.width(), decoded.height()), (2400, 1800));
+    assert!(
+        std::fs::metadata(&compressed).unwrap().len() < std::fs::metadata(&source).unwrap().len(),
+        "this detailed high-quality fixture should shrink; this is not a general size guarantee"
+    );
+
+    let mut sharing = settings(OutputFormat::Jpeg);
+    sharing.image.resize_mode = ResizeMode::Contain;
+    sharing.image.width = Some(1920);
+    sharing.image.height = Some(1920);
+    let shared = convert_without_a_media_engine(&source, &sharing)
+        .await
+        .expect("sharing resize without FFmpeg");
+    let decoded = image::open(&shared).expect("decode sharing JPEG");
+    assert_eq!((decoded.width(), decoded.height()), (1920, 1440));
+    assert_eq!(digest(&source), source_digest);
+    assert!(directory.path().read_dir().unwrap().all(|entry| {
+        !entry
+            .unwrap()
+            .file_name()
+            .to_string_lossy()
+            .contains(".morflo-part")
+    }));
+}
+
+#[tokio::test]
 async fn an_existing_output_is_never_overwritten_without_a_media_engine() {
     let directory = tempdir().expect("temporary test directory");
     let source = write_png(
@@ -180,6 +229,26 @@ async fn an_existing_output_is_never_overwritten_without_a_media_engine() {
         sentinel_digest,
         "the pre-existing output must stay byte-identical"
     );
+}
+
+#[tokio::test]
+async fn smaller_png_processing_preserves_every_alpha_value() {
+    let directory = tempdir().expect("temporary test directory");
+    let pixels = RgbaImage::from_fn(32, 32, |x, y| Rgba([120, 90, 180, ((x + y) * 4) as u8]));
+    let source = write_png(
+        directory.path(),
+        "transparent.png",
+        DynamicImage::ImageRgba8(pixels.clone()),
+    );
+    let source_digest = digest(&source);
+    let mut smaller = settings(OutputFormat::Png);
+    smaller.image.quality = Quality::Smaller;
+    let published = convert_without_a_media_engine(&source, &smaller)
+        .await
+        .expect("alpha-safe PNG processing without FFmpeg");
+    assert_eq!(published.file_name().unwrap(), "transparent (2).png");
+    assert_eq!(image::open(&published).unwrap().to_rgba8(), pixels);
+    assert_eq!(digest(&source), source_digest);
 }
 
 #[tokio::test]

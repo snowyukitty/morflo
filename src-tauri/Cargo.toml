@@ -1,6 +1,6 @@
 [package]
 name = "morflo"
-version = "0.2.2"
+version = "0.3.0"
 description = "A local-first image and video converter"
 authors = ["Snowy"]
 license = "MIT OR Apache-2.0"

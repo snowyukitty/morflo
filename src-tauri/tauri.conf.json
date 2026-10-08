@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Morflo",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "identifier": "com.morflo.desktop",
   "build": {
     "beforeBuildCommand": "pnpm build:frontend",

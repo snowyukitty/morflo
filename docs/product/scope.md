@@ -1,4 +1,4 @@
-# Morflo v0.1 scope
+# Morflo product scope
 
 ## P0
 
@@ -10,6 +10,11 @@
 - Image output: PNG, JPEG, WebP, AVIF, and multi-resolution ICO when the active engine proves the required encoders and muxers.
 - Video output: Universal MP4, Smaller MP4, Web-friendly WebM, and animated GIF.
 - Image controls: outcome quality, original or constrained dimensions, alpha flattening background, metadata policy, destination, and naming.
+- Image outcome shortcuts: Easy to share, Smaller file, and Keep transparency.
+  Each resolves against actual capabilities for each selected image, retains
+  metadata and animation consent, and leaves video settings unchanged. Sharing
+  fits known large sources inside 1920 × 1920 px without enlarging small images;
+  smaller-file processing preserves alpha and makes no size guarantee.
 - Video controls: outcome preset, original/1080p/720p resolution, quality, destination; stream-loss warnings before execution.
 - GIF controls: poster/visual preview, start/end range, width, FPS, quality preset, loop behavior, and qualitative large-file guidance.
 - Mixed-media queue with item selection, compatible group settings, per-item override, real progress, cancellation, retry, partial success, and reveal.

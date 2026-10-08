@@ -29,94 +29,94 @@ test.beforeAll(async () => {
   await mkdir(screenshotRoot, { recursive: true });
 });
 
-test("captures the required product states", async ({ page }) => {
-  const states = [
-    { name: "empty-light-1440x900", query: "demo=empty&theme=light", width: 1440, height: 900 },
-    { name: "queue-light-1440x900", query: "demo=queue&theme=light", width: 1440, height: 900 },
-    { name: "active-1280x800", query: "demo=active&theme=light", width: 1280, height: 800 },
-    { name: "video-to-gif-1280x800", query: "demo=gif&theme=light", width: 1280, height: 800 },
-    {
-      name: "video-to-gif-dark-1280x800",
-      query: "demo=gif&theme=dark",
-      width: 1280,
-      height: 800,
-    },
-    {
-      name: "video-to-gif-narrow-780x620",
-      query: "demo=gif&theme=light",
-      width: 780,
-      height: 620,
-      scrollInspector: true,
-    },
-    {
-      name: "completed-1440x900",
-      query: "demo=complete&theme=light",
-      width: 1440,
-      height: 900,
-    },
-    {
-      name: "partial-completion-1280x800",
-      query: "demo=partial&selection=all&theme=light",
-      width: 1280,
-      height: 800,
-    },
-    {
-      name: "completed-dark-1280x800",
-      query: "demo=complete&theme=dark",
-      width: 1280,
-      height: 800,
-    },
-    { name: "error-1280x800", query: "demo=error&theme=light", width: 1280, height: 800 },
-    { name: "queue-dark-1440x900", query: "demo=queue&theme=dark", width: 1440, height: 900 },
-    {
-      name: "engine-diagnostics-ready-1280x800",
-      query: "demo=queue&panel=diagnostics&theme=light",
-      width: 1280,
-      height: 800,
-    },
-    {
-      name: "engine-diagnostics-missing-dark-1280x800",
-      query: "demo=engine-missing&panel=diagnostics&theme=dark",
-      width: 1280,
-      height: 800,
-    },
-    {
-      name: "engine-built-in-1280x800",
-      query: "demo=engine-native&theme=light",
-      width: 1280,
-      height: 800,
-    },
-    {
-      name: "engine-diagnostics-built-in-1280x800",
-      query: "demo=engine-native&panel=diagnostics&theme=light",
-      width: 1280,
-      height: 800,
-    },
-    { name: "narrow-780x620", query: "demo=queue&theme=light", width: 780, height: 620 },
-    {
-      name: "completed-narrow-780x620",
-      query: "demo=complete&theme=light",
-      width: 780,
-      height: 620,
-      scrollInspector: true,
-    },
-    {
-      name: "design-directions-1440x900",
-      query: "study=design&theme=light",
-      width: 1440,
-      height: 900,
-    },
-  ] as const;
+const productStates = [
+  { name: "empty-light-1440x900", query: "demo=empty&theme=light", width: 1440, height: 900 },
+  { name: "queue-light-1440x900", query: "demo=queue&theme=light", width: 1440, height: 900 },
+  { name: "active-1280x800", query: "demo=active&theme=light", width: 1280, height: 800 },
+  { name: "video-to-gif-1280x800", query: "demo=gif&theme=light", width: 1280, height: 800 },
+  {
+    name: "video-to-gif-dark-1280x800",
+    query: "demo=gif&theme=dark",
+    width: 1280,
+    height: 800,
+  },
+  {
+    name: "video-to-gif-narrow-780x620",
+    query: "demo=gif&theme=light",
+    width: 780,
+    height: 620,
+    scrollInspector: true,
+  },
+  {
+    name: "completed-1440x900",
+    query: "demo=complete&theme=light",
+    width: 1440,
+    height: 900,
+  },
+  {
+    name: "partial-completion-1280x800",
+    query: "demo=partial&selection=all&theme=light",
+    width: 1280,
+    height: 800,
+  },
+  {
+    name: "completed-dark-1280x800",
+    query: "demo=complete&theme=dark",
+    width: 1280,
+    height: 800,
+  },
+  { name: "error-1280x800", query: "demo=error&theme=light", width: 1280, height: 800 },
+  { name: "queue-dark-1440x900", query: "demo=queue&theme=dark", width: 1440, height: 900 },
+  {
+    name: "engine-diagnostics-ready-1280x800",
+    query: "demo=queue&panel=diagnostics&theme=light",
+    width: 1280,
+    height: 800,
+  },
+  {
+    name: "engine-diagnostics-missing-dark-1280x800",
+    query: "demo=engine-missing&panel=diagnostics&theme=dark",
+    width: 1280,
+    height: 800,
+  },
+  {
+    name: "engine-built-in-1280x800",
+    query: "demo=engine-native&theme=light",
+    width: 1280,
+    height: 800,
+  },
+  {
+    name: "engine-diagnostics-built-in-1280x800",
+    query: "demo=engine-native&panel=diagnostics&theme=light",
+    width: 1280,
+    height: 800,
+  },
+  { name: "narrow-780x620", query: "demo=queue&theme=light", width: 780, height: 620 },
+  {
+    name: "completed-narrow-780x620",
+    query: "demo=complete&theme=light",
+    width: 780,
+    height: 620,
+    scrollInspector: true,
+  },
+  {
+    name: "design-directions-1440x900",
+    query: "study=design&theme=light",
+    width: 1440,
+    height: 900,
+  },
+] as const;
 
-  for (const state of states) {
+for (const state of productStates) {
+  test(`captures ${state.name}`, async ({ page }) => {
     await page.setViewportSize({ width: state.width, height: state.height });
     await settle(page, state.query);
     if ("scrollInspector" in state) {
       await page.locator(".inspector").scrollIntoViewIfNeeded();
     }
     await page.screenshot({ path: resolve(screenshotRoot, `${state.name}.png`) });
-  }
-});
+  });
+}
 
 async function captureScale(browser: Browser, scale: number, name: string): Promise<void> {
   const context = await browser.newContext({
@@ -177,6 +177,40 @@ test("presents measured individual and batch outcomes", async ({ page }) => {
   await page.getByRole("button", { name: "Select all" }).click();
   await expect(page.getByRole("heading", { name: "1 of 2 outputs is ready" })).toBeVisible();
   await expect(page.getByText("1 needs attention")).toBeVisible();
+});
+
+test("offers image outcomes without an external engine at desktop and minimum sizes", async ({
+  page,
+}) => {
+  for (const theme of ["light", "dark"]) {
+    for (const width of [1280, 780]) {
+      await page.setViewportSize({ width, height: width === 780 ? 620 : 800 });
+      await settle(page, `demo=engine-native&theme=${theme}`);
+      await page.getByRole("button", { name: "Smaller file", exact: true }).click();
+      await expect(
+        page.getByRole("button", { name: "PNG. Keeps transparency" }),
+      ).toHaveAttribute("aria-pressed", "true");
+      await expect(page.getByText("PNG · Keeps transparency · Size may grow")).toBeVisible();
+      await page.getByText("O'Reilly cup.jpg", { exact: true }).click();
+      await expect(page.getByRole("button", { name: "JPEG. Easy to share" })).toHaveAttribute(
+        "aria-pressed",
+        "true",
+      );
+      await expect(
+        page.getByRole("button", { name: "WebP. Smaller web image" }),
+      ).toBeDisabled();
+      const share = page.getByRole("button", { name: "Easy to share", exact: true });
+      await share.focus();
+      await page.keyboard.press("Enter");
+      await expect(share).toHaveAttribute("aria-pressed", "true");
+      await expect(page.getByLabel("Resize mode")).toHaveValue("contain");
+      await expect(page.getByLabel(/^Width/)).toHaveValue("1920");
+      await share.scrollIntoViewIfNeeded();
+      await page.screenshot({
+        path: resolve(screenshotRoot, `image-sharing-${theme}-${width}.png`),
+      });
+    }
+  }
 });
 
 test("keeps the GIF range direct, constrained, and keyboard ordered", async ({ page }) => {

@@ -144,6 +144,22 @@ export const copy = {
     image: "Image",
   },
   image: {
+    outcomeTitle: "What do you need?",
+    outcomes: {
+      share: "Easy to share",
+      smaller: "Smaller file",
+      transparent: "Keep transparency",
+    },
+    shareResized: "JPEG · Balanced · Up to 1920 px",
+    shareOriginal: "JPEG · Balanced · Original dimensions",
+    smallerJpeg: "JPEG · Smaller quality · Original dimensions",
+    smallerWebp: "WebP · Smaller quality · Keeps transparency",
+    smallerPng: "PNG · Keeps transparency · Size may grow",
+    transparentDescription: "PNG · Original dimensions · Keeps transparency",
+    noTransparency: "This image has no transparency",
+    outcomeUnavailable: "Unavailable with the current engine",
+    outcomeNote:
+      "Applied to compatible selected images. Metadata and animation choices stay as set. Actual size is measured after conversion.",
     localPreview: "Local preview",
     outputFormat: "Output format",
     recommended: "Recommended for this file",

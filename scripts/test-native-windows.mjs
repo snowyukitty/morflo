@@ -1,4 +1,4 @@
-import { chromium } from "@playwright/test";
+import { chromium, expect } from "@playwright/test";
 import { copyFile, mkdir, readdir, stat, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { spawn, spawnSync } from "node:child_process";
@@ -85,6 +85,22 @@ try {
   await page.screenshot({ path: join(runRoot, "02-native-diagnostics.png") });
   await page.getByRole("button", { name: "Close engine diagnostics" }).click();
 
+  await page.getByRole("button", { name: "Keep transparency", exact: true }).click();
+  await expect(page.getByRole("button", { name: "PNG. Keeps transparency" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  await expect(page.getByLabel("Resize mode")).toHaveValue("original");
+  await expect(page.getByText("JPEG has no transparency", { exact: true })).toHaveCount(0);
+  await page.getByRole("button", { name: "Easy to share", exact: true }).click();
+  await expect(page.getByRole("button", { name: "JPEG. Easy to share" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  await expect(page.getByLabel("Resize mode")).toHaveValue("original");
+  await expect(page.getByText("JPEG has no transparency", { exact: true })).toBeVisible();
+  await page.screenshot({ path: join(runRoot, "02-native-image-outcomes.png") });
+
   await page.getByRole("button", { name: "Convert", exact: true }).click();
   const completed = page.getByRole("button", { name: `Reveal output for ${sourceName}` });
   const failed = page.locator(".error-panel");
@@ -153,7 +169,7 @@ try {
     capabilitySummary: capabilitySummary?.trim(),
     inheritedEnginePathEntriesRemoved: removedEngineDirectoryCount,
     journey:
-      "startup transparent PNG -> explicit alpha warning -> default JPEG -> measured receipt -> collision-safe suffixed output",
+      "startup transparent PNG -> keep transparency -> sharing without enlargement -> explicit alpha warning -> JPEG -> measured receipt -> collision-safe suffixed output",
     sourceName,
     sourceHashPreserved: true,
     existingOutputPreserved: true,
@@ -168,6 +184,7 @@ try {
     screenshots: [
       join(runRoot, "01-native-ready.png"),
       join(runRoot, "02-native-diagnostics.png"),
+      join(runRoot, "02-native-image-outcomes.png"),
       join(runRoot, "03-native-converted.png"),
     ],
   };

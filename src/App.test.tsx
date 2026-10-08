@@ -67,6 +67,57 @@ describe("Morflo primary UI", () => {
     );
   });
 
+  test("recommends a usable JPEG output without an external engine", async () => {
+    const user = userEvent.setup();
+    setView("demo=engine-native&theme=light");
+    render(<App />);
+    await user.click(screen.getByText("O'Reilly cup.jpg"));
+    expect(screen.getByRole("button", { name: "JPEG. Easy to share" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(screen.getByRole("button", { name: "WebP. Smaller web image" })).toBeDisabled();
+    await user.click(screen.getByRole("button", { name: /^Smaller file/ }));
+    expect(screen.getByRole("button", { name: "Smaller" })).toHaveAttribute(
+      "class",
+      expect.stringContaining("is-selected"),
+    );
+    expect(screen.getByLabelText("Resize mode")).toHaveValue("original");
+    expect(screen.getByRole("button", { name: /^Keep transparency/ })).toBeDisabled();
+  });
+
+  test("applies sharing to each selected image without changing video settings", async () => {
+    const user = userEvent.setup();
+    setView("demo=queue&theme=light");
+    render(<App />);
+    await user.click(screen.getByRole("button", { name: "Select all" }));
+    await user.click(screen.getByRole("button", { name: "Easy to share" }));
+    expect(screen.getByLabelText("Resize mode")).toHaveValue("contain");
+    expect(screen.getByLabelText(/^Width/)).toHaveValue(1920);
+    await user.click(screen.getByText("O'Reilly cup.jpg"));
+    expect(screen.getByRole("button", { name: "JPEG. Easy to share" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(screen.getByLabelText(/^Height/)).toHaveValue(1920);
+    await user.click(screen.getByText("京都散歩 🧳.mov"));
+    expect(screen.getByRole("button", { name: /Universal MP4/ })).toHaveClass("is-selected");
+  });
+
+  test("keeps alpha when making a smaller image with the built-in engine", async () => {
+    const user = userEvent.setup();
+    setView("demo=engine-native&theme=dark");
+    render(<App />);
+    await user.click(screen.getByRole("button", { name: /^Smaller file/ }));
+    expect(screen.getByRole("button", { name: "PNG. Keeps transparency" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(screen.getByText("PNG · Keeps transparency · Size may grow")).toBeVisible();
+    expect(screen.queryByText("JPEG has no transparency", { selector: "strong" })).toBeNull();
+    expect(screen.getByLabelText("Resize mode")).toHaveValue("original");
+  });
+
   test("has no serious automated accessibility violations in the working state", async () => {
     setView("demo=queue&theme=light");
     const { container } = render(<App />);

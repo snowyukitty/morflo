@@ -15,11 +15,31 @@ ICO always creates one PNG-compressed container with 16, 32, 48, and 256 px entr
 
 Metadata defaults to **Remove metadata** for privacy, stated beside the control. Visual orientation is applied before removal. `Preserve metadata` maps what the engine can carry, but Morflo does not promise byte-identical EXIF or ICC preservation across formats.
 
-Image recommendations avoid unexplained same-format work: PNG begins with JPEG
-and its explicit alpha decision, JPEG and other common image families begin with
-WebP, transparent WebP begins with alpha-preserving PNG, and opaque WebP begins
-with easy-to-share JPEG. The user can always choose another capability-proven
-output.
+Image recommendations use the active capability registry. PNG begins with JPEG
+and its visible alpha decision; JPEG begins with WebP when available and JPEG
+otherwise. Transparent WebP begins with PNG, and opaque WebP begins with JPEG.
+Other alpha images prefer WebP then PNG; opaque images prefer WebP then JPEG
+then PNG. A suitable unavailable output is never promoted by its extension.
+Intake and inspection retry obtain current capabilities before choosing defaults.
+
+## Image outcomes
+
+- **Easy to share** chooses balanced JPEG. Known sources larger than 1920 px
+  on either axis fit within 1920 × 1920 px with aspect ratio preserved. Small
+  or unknown-dimension sources retain their dimensions; there is no crop or
+  enlargement. Transparent sources retain the explicit flattening warning.
+- **Smaller file** chooses smaller-quality JPEG for an opaque image, including
+  JPEG to JPEG. An alpha image uses smaller-quality WebP when available or
+  lossless PNG otherwise, with an explicit warning that size may grow. It does
+  not resize. PNG's quality enum controls compression effort, not pixel loss.
+- **Keep transparency** chooses PNG at original dimensions only for an image
+  with alpha. It does not add transparency to an opaque photo.
+
+Each selected image is resolved separately. Incompatible items stay unchanged.
+Outcomes retain metadata, animation consent, background, destination and
+collision policy. Manual controls remain editable, and the outcome's pressed
+state reflects its current settings rather than a separate remembered label.
+Size claims come only from the final re-probed artifact.
 
 ## Video
 

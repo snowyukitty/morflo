@@ -4,16 +4,15 @@ Last updated: 2026-10-09
 
 ## Current gate
 
-Gate 9 — released locally as unsigned 0.2.2. Morflo provides backward-compatible
-media engine probing and video planning for FFmpeg < 6.0 (including 5.0.1),
-coupled with built-in native image inspection fallbacks so host media engine
-discrepancies never block format selection or image conversions.
+Gate 10 — 0.3.0 image outcomes and verified source checkpoint.
+The image inspector offers Easy to share, Smaller file and Keep transparency.
+Recommendations now use actual engine capabilities, including working JPEG
+input defaults without FFmpeg. User guides and repository contribution paths
+are aligned with built-in image support and current distribution status.
 
-Gate 8 and Gate 7 remain complete: built-in redistributable image engine, native
-Windows first-run readiness, outcome confidence, GIF moment confidence, and
-restrained Open with intake, with reviewed-sidecar intake and secure unreviewed
-candidate dossiers technically ready. The private GitHub checkpoint is
-established and synchronization to public Morflo is documented.
+The unsigned Windows 0.3.0 package is installed and its native journeys passed.
+The application license is MIT OR Apache-2.0, selected 2026-09-03. No public
+signed installer or reviewed media-engine bundle is claimed.
 
 ## Baseline
 
@@ -880,25 +879,90 @@ Evidence boundary:
   stage the state would mutate the owner's system. This is a QA evidence gap,
   not a claim that the installed engine-free session was observed.
 
+### Gate 10 — image outcomes and discoverable source checkpoint
+
+- Added capability-aware image recommendations and fresh capability retrieval
+  on intake and inspection retry, fixing JPEG defaulting to unavailable WebP
+  with the built-in engine.
+- Added three explicit image outcomes with visible format/quality/dimension
+  descriptions, per-image mixed-selection resolution, alpha-safe smaller-file
+  handling, no enlargement in sharing, and unchanged metadata/animation consent.
+- The version badge now reads package metadata; version sources are 0.3.0.
+- Reorganized the README around user tasks, actual built-in support and honest
+  download availability. Added three practical guides, changelog, roadmap,
+  contribution/security guidance and privacy-conscious issue/PR templates.
+- Removed stale undecided-license wording and obsolete publication assessment.
+- Fixed Windows package artifact selection to check the current semantic version
+  rather than fail when an older installer is also present. Package and Tauri
+  versions must agree; older artifacts are preserved.
+
+Checks completed on 2026-10-09:
+
+- `pnpm verify` passed, including the unmodified `pnpm verify:quality` contract:
+  - Formatting, generated Windows handlers, ESLint, TypeScript, Rust fmt and
+    Clippy passed, including the standard debug-profile Rust checks.
+  - 31 frontend tests, 58 Rust unit tests, 11 engine-free integration tests and
+    26 Playwright tests passed. Browser checks cover light/dark, minimum size,
+    keyboard outcomes, zoom and serious accessibility violations.
+  - Engine dossier/verifier tests: 16 passed, one skipped because this host
+    cannot create an unprivileged test symlink/reparse point.
+  - Frontend and optimized Windows release builds passed. Privacy audit scanned
+    32 production files; the production npm audit reported no known vulnerabilities.
+- 11 real-engine integration cases passed against the local FFmpeg 5.0.1 pair,
+  including a 20-image batch. Real process-tree cancellation passed in 1,041 ms.
+- Generated AVIF and HEIC/HEIF fixtures were skipped because the detected engine
+  lacks those muxers. HEIC/HEIF remains unverified. These skips do not substitute
+  for format evidence.
+- Reviewed light and dark outcome captures; added a public README screenshot
+  explicitly labeled as illustrative sample data.
+- Local documentation links, whitespace and publication-content scans passed.
+- Public repository About/topics now describe image compression and resizing;
+  private vulnerability reporting is enabled to match `SECURITY.md`.
+
+- `pnpm package` initially built the installer but rejected the directory because
+  0.2.2 and 0.3.0 artifacts coexisted. After the version-specific selection fix,
+  the command passed in one build round with both versions retained.
+- Unsigned `Morflo_0.3.0_x64-setup.exe` was installed; the installed executable
+  reports 0.3.0. Installed-tree inspection passed with only `morflo.exe` and
+  `uninstall.exe`, without media-engine files. Installer SHA-256:
+  `B70B2F3D9A57858040D2D388D8458CD24DCE78E22C7BC3FA31ED9DF4E38CB193`.
+- `test:installer:open-with:windows` passed current-user install, uninstall and
+  reinstall for all 13 conservative extensions, preserving observed defaults,
+  `UserChoice` and the original Desktop shortcut byte-for-byte.
+- All four native Windows journeys passed against the installed 0.3.0 executable:
+  - Image outcomes, PNG to JPEG, source/collision preservation and measured
+    receipt: 4,589 ms. Keep transparency and Easy to share were exercised in the
+    actual WebView; the outcome screenshot was visually inspected.
+  - Seven GIF moments, local range preview, 24-frame GIF and decoded receipt:
+    4,857 ms.
+  - Real video encode cancellation: 1,980 ms, with no published output, partials
+    or surviving FFmpeg children.
+  - Single-instance Open with and relative-path intake: first arrival 961 ms,
+    clean secondary exits and unchanged source hashes.
+- Post-package privacy audit passed again against the Windows frontend bundle.
+
+Evidence limits:
+
+- The host still has a persistent-registry FFmpeg installation. The installed
+  GUI journeys therefore use that local engine; engine-free image evidence is
+  the real `native_only` integration suite and capability-specific frontend tests.
+  A clean Windows first-use session without FFmpeg remains unrun.
+- No hosted workflow was dispatched at this gate. Current macOS/Linux packaged
+  runtime checks and trusted signing remain unrun. No tag or binary release was
+  published, and no application analytics or runtime network feature was added.
+
 ## Next
 
-Choose the root application license. This is now the first blocker rather than
-one of several, because Morflo can already ship a working image converter
-without resolving the media-engine question at all.
+Complete clean-machine Windows first-use evidence without FFmpeg, trusted
+signing and explicit release authorization before public installer distribution.
+Use voluntary first-use testing to evaluate the image outcomes. Prioritize
+bounded real encode preview, target-size attempts and lossy WebP evaluation
+according to [the roadmap](product/roadmap.md).
 
-Commission an owner/legal review of one exact redistributable FFmpeg/ffprobe
-bundle, then create and pin its first real schema-v1 manifest. The dossier
-command can supply unreviewed technical observations to that review but cannot
-make or automate the decision. This now unblocks video, animated GIF, WebP and
-AVIF rather than the whole application.
-
-Two follow-ups are open from ADR 0007 and are deliberately separate decisions:
-whether the built-in engine should become the default for images even when a
-media engine is present, which needs comparative output and speed evidence
-first; and whether a pure-Rust lossy WebP or AVIF encoder can be added without
-offering a quality control that cannot act.
-
-Signing and broader platform QA follow the license decision.
+Review one exact redistributable media-engine build separately to enable
+setup-free video, animated GIF and additional image outputs. Built-in images
+do not depend on that decision. Engine-default changes still require comparative
+output/speed evidence, as recorded in ADR 0007.
 
 ## Known risks
 
@@ -925,12 +989,12 @@ Signing and broader platform QA follow the license decision.
 - The Windows association lifecycle and exact command handoff are automated,
   but the Explorer menu-selection gesture remains unrun because native desktop
   control was unavailable on this host.
-- Windows package construction is proven through the bounded recovery path on
-  this host, but its generated executables are unsigned and the standard fresh
-  debug-profile quality command can still be rejected by enforced App Control.
-- The unsigned Linux package does not bundle a media engine; normal packaged
-  conversion still depends on a compatible local engine until distribution and
-  license decisions are resolved.
+- Windows package construction uses the bounded recovery path on this host.
+  Generated executables are unsigned. The standard debug-profile quality
+  command passed at Gate 10; enforced App Control remains a host constraint
+  that previously refused fresh generated Cargo helpers.
+- The earlier unsigned Linux package predates the current image outcomes.
+  Current Linux packaged runtime behavior still needs fresh validation.
 - The manual cross-platform workflow was dispatched but refused before any step
   ran, for reasons external to this repository. Hosted Windows, macOS and Linux
   compilation therefore remains unvalidated, and macOS has never been built and

@@ -206,3 +206,19 @@ Windows 150% device scale: `01-native-empty.png`,
 - IconFlow re-delivered and read back the final direct shortcut with no arguments,
   the installed working directory, and the immutable content-addressed Morflo
   icon. Product UI needed no compensating shortcut-management surface.
+
+## Pass 8 — image outcomes
+
+- Added three vertically stacked outcome buttons above the existing format
+  controls. Each names the actual format and quality/dimension change before
+  application. Manual controls remain available in the same inspector.
+- Selected outcomes have a visible check and an accessible pressed state.
+  Descriptions are associated through `aria-describedby`; unavailable outcomes
+  explain the missing capability or absence of alpha.
+- Inspected the 1280 × 800 light and 780 × 620 dark sharing captures. Text wraps,
+  the focus ring remains visible, and the narrow inspector follows the queue
+  within the existing scroll surface. The fixed Convert action remains reachable.
+- The built-in-engine example distinguishes WebP input from disabled WebP output
+  and keeps the transparent image as PNG when Smaller file is applied.
+- Screenshot capture states now have individual tests rather than sharing one
+  aggregate timeout. Behavioral assertions and per-test deadlines remain intact.

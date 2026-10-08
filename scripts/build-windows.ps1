@@ -26,6 +26,12 @@ $releaseRoot = [IO.Path]::GetFullPath((Join-Path $targetRoot "release"))
 $allowedBuildRoot = [IO.Path]::GetFullPath((Join-Path $releaseRoot "build"))
 $allowedDepsRoot = [IO.Path]::GetFullPath((Join-Path $releaseRoot "deps"))
 $bundleRoot = [IO.Path]::GetFullPath((Join-Path $releaseRoot "bundle\nsis"))
+$packageVersion = (Get-Content -LiteralPath (Join-Path $repoRoot "package.json") -Raw | ConvertFrom-Json).version
+$tauriVersion = (Get-Content -LiteralPath (Join-Path $tauriRoot "tauri.conf.json") -Raw | ConvertFrom-Json).version
+if ($packageVersion -notmatch '^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$' -or $packageVersion -ne $tauriVersion) {
+    throw "Windows packaging requires matching package and Tauri semantic versions."
+}
+$expectedInstaller = Join-Path $bundleRoot "Morflo_${packageVersion}_x64-setup.exe"
 $reviewedStageRoot = [IO.Path]::GetFullPath((Join-Path $targetRoot "reviewed-engine-package"))
 $reviewedStageBundle = [IO.Path]::GetFullPath((Join-Path $reviewedStageRoot "engines"))
 $reviewedConfig = [IO.Path]::GetFullPath((Join-Path $reviewedStageRoot "tauri.reviewed-engine.json"))
@@ -184,12 +190,11 @@ try {
         $output = @($capturedOutput | ForEach-Object { $_.ToString() }) -join [Environment]::NewLine
 
         if ($buildCode -eq 0) {
-            $installers = @(Get-ChildItem -LiteralPath $bundleRoot -Filter "Morflo_*_x64-setup.exe" -File)
-            if ($installers.Count -ne 1) {
-                throw "Expected exactly one Morflo NSIS installer under $bundleRoot; found $($installers.Count)."
+            if (-not (Test-Path -LiteralPath $expectedInstaller -PathType Leaf)) {
+                throw "Expected the current Morflo NSIS installer at $expectedInstaller."
             }
             Write-Host "WINDOWS PACKAGE: succeeded after $round round(s)."
-            Write-Host "INSTALLER: $($installers[0].FullName)"
+            Write-Host "INSTALLER: $expectedInstaller"
             exit 0
         }
 

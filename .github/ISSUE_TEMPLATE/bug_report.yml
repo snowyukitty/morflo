@@ -1,0 +1,45 @@
+name: Bug report
+description: Report a reproducible conversion or interface problem.
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: "Do not attach private media, credentials, full paths, or unredacted logs. Prefer synthetic files. Report vulnerabilities privately using SECURITY.md."
+  - type: input
+    id: version
+    attributes:
+      label: Morflo version
+      placeholder: "0.3.0 source checkpoint"
+    validations:
+      required: true
+  - type: input
+    id: system
+    attributes:
+      label: Operating system and architecture
+      placeholder: "Windows 11 x64"
+    validations:
+      required: true
+  - type: input
+    id: engine
+    attributes:
+      label: Active engine
+      description: "Use Engine Diagnostics. Include engine version if available, but remove local paths."
+      placeholder: "Built-in image engine, or FFmpeg version"
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps and selected settings
+      description: "Include input/output formats, image dimensions, outcome and whether this affects one file or a batch."
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected and actual result
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Optional redacted diagnostics
+      description: "Remove usernames, private filenames and absolute paths."

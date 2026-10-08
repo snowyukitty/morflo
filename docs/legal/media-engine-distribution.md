@@ -32,7 +32,10 @@ OS authority and is not network-sandboxed. `--allow-execution` is therefore
 mandatory, the child environment is stripped of inherited credentials/search
 paths/proxy variables, and the command makes no stronger containment claim.
 
-The project license has not been chosen. Engine choices must preserve the owner's ability to choose proprietary, source-available, or open-source terms.
+Morflo's source is licensed under MIT OR Apache-2.0, including the built-in
+image engine. This does not approve an external media-engine build for
+redistribution. Engine licensing, provenance, notices, source offers and codec
+considerations remain a separate exact-build review.
 
 ## Development engine observed on 2026-08-30
 
