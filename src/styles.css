@@ -942,43 +942,6 @@ input:disabled {
   padding: 2px 20px 18px;
 }
 
-.image-source-preview {
-  position: relative;
-  display: grid;
-  place-items: center;
-  min-height: 104px;
-  margin-top: 16px;
-  overflow: hidden;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-md);
-  background:
-    linear-gradient(45deg, var(--surface-muted) 25%, transparent 25%) 0 0 / 16px 16px,
-    linear-gradient(45deg, transparent 75%, var(--surface-muted) 75%) 0 0 / 16px 16px,
-    linear-gradient(45deg, transparent 75%, var(--surface-muted) 75%) -8px 8px / 16px 16px,
-    linear-gradient(45deg, var(--surface-muted) 25%, var(--surface-raised) 25%) -8px 8px / 16px
-      16px;
-}
-
-.image-source-preview img {
-  display: block;
-  width: 100%;
-  height: 132px;
-  object-fit: contain;
-}
-
-.image-source-preview span {
-  position: absolute;
-  right: 8px;
-  bottom: 8px;
-  padding: 4px 7px;
-  border-radius: 6px;
-  color: var(--surface-raised);
-  background: color-mix(in srgb, var(--ink) 82%, transparent);
-  font-size: 9px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
 .setting-group {
   padding: 17px 0;
   border-bottom: 1px solid var(--line);

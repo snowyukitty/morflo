@@ -10,12 +10,18 @@ see [build instructions](../development.md).
 1. Open Morflo and choose **Choose files**, or drop images into the window.
 2. Select a file and review **What do you need?** Choose **Easy to share**,
    **Smaller file**, or **Keep transparency** when available.
-3. Check the output format, dimensions and any transparency or animation warning.
+3. Read **Planned output** beside the source. Open **Manual settings** to change
+   format, quality, dimensions or metadata. Check any transparency or animation warning.
 4. Choose **Convert**. After completion, inspect the measured size change and
    choose **Reveal in folder**.
 
 The default destination is beside the source. If that output name exists,
 Morflo adds a number. The original file stays unchanged.
+
+After conversion, **Actual output** shows the measured format, dimensions and
+bytes in the same row. A positive size change means the output is larger.
+The top total includes only the successful files counted in its label.
+Use the settings button beside Add files to hide or show the inspector.
 
 ## More than one image
 
@@ -25,12 +31,22 @@ applying an outcome. Each compatible image gets its own settings. For example,
 image. Video settings stay unchanged. The Convert action starts all ready files
 in the queue, including ready files outside the current selection.
 
+Use **Needs attention** to find failed or canceled files and **Completed** to
+review successful outputs. **Prepare N retries** keeps existing conversion
+settings and returns recoverable files to review without starting conversion.
+Filters do not change the queue-wide Convert scope or measured totals.
+See [recover an interrupted batch](batch-recovery.md).
+
 ## Understand availability
 
 With the built-in engine, PNG, JPEG and ICO output are ready. WebP input can
 be converted to PNG or JPEG. WebP and AVIF output, video conversion and animated
 GIF creation need a compatible local media engine. Unavailable formats are
 marked with a reason; Engine Diagnostics explains the active engine.
+
+If an added video needs FFmpeg, choose **Set up video conversion** from its
+attention panel. After making an engine available, choose **Try again**. The
+original remains in the queue and images can still use the built-in engine.
 
 Do not install an executable from an untrusted source. Morflo's engine
 selection checks compatibility, not the safety of an arbitrary downloaded file.

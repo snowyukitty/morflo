@@ -267,6 +267,42 @@ export const nativeDemoCapabilities: CapabilityRegistry = {
 };
 
 export function getDemoFiles(state: string | null): MediaFile[] {
+  if (state === "recovery") {
+    const completed = files.complete[1];
+    const failed = files.error[0];
+    const canceled = files.queue[0];
+    const ready = files.queue[1];
+    if (!completed || !failed || !canceled || !ready) return [];
+    return structuredClone([
+      completed,
+      failed,
+      {
+        ...canceled,
+        id: "canceled-image",
+        status: "canceled",
+        phase: "Canceled",
+        progress: 0.42,
+      },
+      ready,
+    ]);
+  }
+  if (state === "video-unavailable") {
+    const video = files.queue[2];
+    if (!video) return [];
+    return [
+      {
+        ...structuredClone(video),
+        kind: "unsupported",
+        status: "failed",
+        phase: "Needs attention",
+        error: {
+          code: "engine_missing",
+          title: "A local media engine is needed",
+          message: "Choose a compatible FFmpeg and ffprobe folder, then try this file again.",
+        },
+      },
+    ];
+  }
   if (state === "engine-native") return structuredClone(files.queue.slice(0, 2));
   if (state === "batch") return structuredClone(batchFiles);
   if (state === "partial") {

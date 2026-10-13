@@ -1,8 +1,109 @@
 # Morflo status
 
-Last updated: 2026-10-09
+Last updated: 2026-10-13
 
 ## Current gate
+
+Gate 12 — recoverable batches and source publication checkpoint, building on 0.3.0.
+The ledger now offers All files, Needs attention and Completed views. Retry
+preparation preserves existing settings, reinspects unreadable sources serially,
+and selects ready retries for review without starting conversions. Successful
+outputs and full-queue measured totals remain intact. Hidden rows cannot be
+changed through selection edits or keyboard removal.
+
+The recovery toolbar shares the existing header row to retain batch density.
+An unsuccessful batch selection explains recovery steps instead of showing a
+zero-output completion receipt. Empty filters and removal/retry actions retain
+predictable keyboard focus. See [design](design/batch-recovery.md) and
+[user guide](guides/batch-recovery.md).
+
+Verification at this gate:
+
+- `pnpm verify`: passed, including 11 real-engine integration tests and real
+  process-tree cancellation (796 ms). HEIC fixture generation remains skipped
+  because the available engine has no HEIF muxer; it is not a support claim.
+- Final `pnpm verify:quality`: passed 34 frontend tests, 17 engine-tooling tests,
+  58 Rust unit tests, 11 built-in image integration tests and 31 browser tests.
+  Formatting, lint, typecheck, Clippy, privacy and full npm dependency audit passed.
+- `pnpm package`: passed. Installed the unsigned local package and passed the
+  current-user install/uninstall/reinstall association lifecycle for all 13
+  extensions, preserving observed defaults and the Desktop shortcut byte-for-byte.
+- Installed native recovery journey: twenty varied image sources plus one
+  deliberately damaged input. Two sources were moved after inspection, yielding
+  18 successes and three failures. After restoring the two sources, Prepare
+  retries produced exactly two ready jobs and one still-failed reinspection.
+  Conversion finished with 20 measured outputs out of 21 queue entries. The
+  first 18 outputs were unchanged, no successful job was reprocessed, all source
+  hashes matched and no owned partial outputs remained.
+- Installed image, GIF, cancellation and Open with journeys passed. GIF evidence
+  includes seven moments, local preview and a decoded 24-frame output. Native
+  cancellation completed in 1,382 ms without a final output, leftover partials
+  or surviving encoder children. Animated-input first-frame consent also passed.
+- Installed-tree inspection passed with no media-engine binaries. The installed
+  executable SHA-256 is
+  `2d7c2ff362222676e1b09e9e51d859026f0fc56bce2cca41e27d8694f6a8889c`.
+- Refreshed the full native window, queued/dark/minimum-size captures and all
+  three portfolio sizes from that installed app. Source hashes and stable row
+  heights passed again; full-size, 480 and 320 pixel images were visually reviewed.
+- Source publication review covers the full change since the public checkpoint,
+  image/sample rights, personal-path and credential patterns, links and workflow
+  side effects. The sole Actions workflow remains manual; no release automation,
+  hosted workflow dispatch, binary upload or sibling website mutation is included.
+
+Version 0.3.0 is retained. This is a source checkpoint, not a signed installer
+release. Clean-machine Windows without FFmpeg and current macOS/Linux packaged
+runtime evidence remain outstanding. Prepared portfolio assets remain a handoff.
+
+### Previous gate — native ledger
+
+Gate 11 — conversion ledger and native showcase refinement, building on 0.3.0.
+Sources, planned targets, actual outputs, signed byte/percentage changes and
+recovery actions now occupy stable row slots. Manual settings are progressively
+disclosed; capability setup, transparency/animation consent and batch action
+scope remain explicit. The existing mark and warm/green identity are retained.
+
+Two working layouts were compared with identical native conversion content.
+The side-inspector ledger won over the bottom workbench on batch visibility.
+The selected layout then received a second density/contrast/preview pass.
+See [design rationale](design/conversion-ledger.md) and
+[native capture provenance](quality/showcase-capture.md).
+
+Verification at this gate:
+
+- `pnpm verify:quality`: passed 34 frontend tests, 17 engine-tooling tests,
+  58 Rust unit tests, 11 built-in image integration tests and 29 browser tests;
+  formatting, lint, typecheck, Clippy, privacy and full dependency audit passed.
+- `pnpm package`: passed through the bounded Windows wrapper. No runtime
+  authority, processing engine, bundled engine, network feature or version was added.
+- Native image conversion: passed, including source/collision hashes, decoded
+  output, explicit alpha warning and measured larger-output receipt.
+- Native 20-file mixed-dimension/alpha batch: 19 successes plus one intentionally
+  moved-source failure; restoring the source and retrying completed all 20.
+  Source hashes were preserved and no partial outputs remained.
+- Native animated-input consent: an implicit still conversion was refused;
+  explicit first-frame selection then succeeded without changing the source.
+- Native GIF journey: passed seven source moments, local range preview and a
+  decoded 24-frame, 2.0-second output. Cancellation stopped the real video
+  process tree with no final output, partial file or surviving FFmpeg child.
+- Native capture: real source and output thumbnails, three actual conversions,
+  unchanged original hashes and stable queued/completed row heights. Reviewed
+  1280 × 800, 960 × 640 and 780 × 620, both themes, and actual-size showcase
+  derivatives at 1200 × 750, 480 × 300 and 320 × 200.
+- Browser coverage includes keyboard selection/conversion/retry, setup-dialog
+  focus restoration, 20-file navigation, responsive action access, accessibility
+  and 100/125/150% scale captures with reduced motion enabled.
+- Installed the final local build from application source `b93f4a1`, preserving
+  the existing Desktop shortcut. Installed executable/capture hashes and the
+  packaged binary match after Tauri's expected three-byte NSIS marker patch.
+  Installed-tree inspection passed with no bundled media engine. The installed
+  Open with journey passed after updating its source/output selectors to the
+  new ledger structure. Final installed GIF and cancellation journeys passed.
+
+The native engine-free installation and cross-platform limitations below remain.
+This is a local implementation gate; no release, tag, hosted workflow or sibling
+website mutation was performed. The portfolio assets are a prepared handoff.
+
+### Previous gate
 
 Gate 10 — 0.3.0 image outcomes and verified source checkpoint.
 The image inspector offers Easy to share, Smaller file and Keep transparency.

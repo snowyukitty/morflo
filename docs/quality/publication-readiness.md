@@ -3,7 +3,8 @@
 Morflo's source repository is public and the application is licensed under
 MIT OR Apache-2.0. The 0.3.0 source checkpoint improves image outcomes,
 capability-aware recommendations, user documentation and contribution paths.
-This is separate from releasing a signed installer.
+The next source checkpoint adds the conversion ledger, measured native showcase
+and interrupted-batch recovery. This is separate from releasing a signed installer.
 
 ## Current publication contract
 

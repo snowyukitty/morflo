@@ -187,6 +187,7 @@ test("offers image outcomes without an external engine at desktop and minimum si
       await page.setViewportSize({ width, height: width === 780 ? 620 : 800 });
       await settle(page, `demo=engine-native&theme=${theme}`);
       await page.getByRole("button", { name: "Smaller file", exact: true }).click();
+      await page.locator(".manual-settings > summary").click();
       await expect(
         page.getByRole("button", { name: "PNG. Keeps transparency" }),
       ).toHaveAttribute("aria-pressed", "true");
@@ -252,4 +253,130 @@ test("remains operable at 200 percent text zoom", async ({ page }) => {
   });
   await expect(page.getByRole("button", { name: "Convert 3 files" })).toBeVisible();
   await expect(page.getByRole("button", { name: /add files/i })).toBeVisible();
+});
+
+test("ledger keeps facts and recovery actions reachable across window sizes", async ({
+  page,
+}) => {
+  for (const width of [1280, 960, 780]) {
+    for (const theme of ["light", "dark"]) {
+      await page.setViewportSize({
+        width,
+        height: width === 1280 ? 800 : width === 960 ? 640 : 620,
+      });
+      await settle(page, `demo=partial&theme=${theme}`);
+      await expect(page.locator(".ledger-total")).toContainText("1 of 2 files measured");
+      await expect(page.getByRole("button", { name: /^Reveal output for/ })).toBeVisible();
+      const retry = page.getByRole("button", { name: /^Retry / });
+      await retry.scrollIntoViewIfNeeded();
+      await retry.focus();
+      await page.keyboard.press("Enter");
+      await expect(page.locator(".file-row.status-ready")).toHaveCount(1);
+      expect(
+        await page
+          .locator(".file-list")
+          .evaluate((node) => node.scrollWidth <= node.clientWidth + 1),
+      ).toBe(true);
+      await page.getByRole("button", { name: "Hide file settings" }).click();
+      await expect(page.locator(".inspector")).toHaveCount(0);
+      await page.getByRole("button", { name: "Show file settings" }).click();
+      await expect(page.locator(".inspector")).toHaveCount(1);
+    }
+  }
+});
+
+test("unavailable video offers setup and preserves a recoverable source", async ({ page }) => {
+  await page.setViewportSize({ width: 960, height: 640 });
+  await settle(page, "demo=video-unavailable&theme=light");
+  await expect(
+    page.getByRole("heading", { name: "Video needs a local media engine" }),
+  ).toBeVisible();
+  await expect(page.locator(".file-row")).toContainText("No output created");
+  await page.getByRole("button", { name: "Set up video conversion" }).click();
+  await expect(page.getByRole("dialog", { name: "Conversion engine" })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("button", { name: "Set up video conversion" })).toBeFocused();
+});
+
+test("twenty-file ledger retains keyboard selection and all queue actions", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 960, height: 640 });
+  await settle(page, "demo=batch&theme=dark");
+  await expect(page.locator(".file-row")).toHaveCount(20);
+  const last = page.locator(".file-row").last().getByRole("checkbox");
+  await last.focus();
+  await page.keyboard.press("Space");
+  await expect(last).toBeChecked();
+  await expect(page.getByRole("button", { name: "Convert 20 files" })).toBeVisible();
+  await page.screenshot({ path: resolve(screenshotRoot, "ledger-20-dark-960.png") });
+});
+
+test("filtered batch recovery keeps successful receipts and prepares only unfinished files", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await settle(page, "demo=recovery&theme=light&selection=all");
+  const total = (await page.locator(".ledger-total").textContent()) ?? "";
+  const attention = page.getByRole("button", { name: "Needs attention 2", exact: true });
+  await attention.focus();
+  await page.keyboard.press("Enter");
+  await expect(attention).toHaveAttribute("aria-pressed", "true");
+  await expect(attention).toBeFocused();
+  await expect(page.locator(".file-row")).toHaveCount(2);
+  await expect(page.locator(".queue-summary")).toContainText("2 selected for settings");
+  await expect(page.locator(".ledger-total")).toHaveText(total);
+  await page.getByRole("button", { name: "Prepare 2 retries", exact: true }).click();
+  await expect(page.getByRole("button", { name: "All files 4", exact: true })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  await expect(page.locator(".file-row.status-ready")).toHaveCount(3);
+  await expect(page.locator(".file-row.status-succeeded")).toHaveCount(1);
+  await expect(page.locator(".file-row.is-selected")).toHaveCount(2);
+  await expect(page.locator(".file-row.is-selected .file-row-main").first()).toBeFocused();
+  await page.getByRole("button", { name: "Easy to share", exact: true }).click();
+  for (const row of await page.locator(".file-row.is-selected").all()) {
+    await expect(row.locator(".target-format")).toContainText("JPEG");
+    await expect(row.locator(".row-state")).toContainText("Not measured");
+  }
+  await expect(page.locator('[data-file-id="canceled-image"]')).toContainText(
+    "Fit within 1920 × 1920",
+  );
+  const untouched = page
+    .locator(".file-row")
+    .filter({ has: page.getByRole("checkbox", { name: "Select O'Reilly cup.jpg" }) });
+  await expect(untouched).toContainText("4032 × 3024");
+  await expect(untouched).not.toContainText("Fit within");
+  await expect(page.locator(".ledger-total")).toHaveText(total);
+  // Filtering never narrows the explicitly queue-wide Convert action.
+  await page.getByRole("button", { name: "Completed 1", exact: true }).click();
+  await expect(page.locator(".file-row")).toHaveCount(1);
+  await page.getByRole("button", { name: "Convert 3 files", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Cancel all", exact: true })).toBeVisible();
+  await expect(page.locator(".file-row.status-succeeded")).toHaveCount(1);
+});
+
+test("empty filters, keyboard removal and recovery stay usable at minimum size", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 780, height: 620 });
+  await settle(page, "demo=recovery&theme=dark&selection=all");
+  await page.getByRole("button", { name: "Needs attention 2", exact: true }).click();
+  await page.keyboard.press("Delete");
+  await expect(
+    page.getByRole("button", { name: "Needs attention 0", exact: true }),
+  ).toBeFocused();
+  await expect(page.getByText("No files need attention", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Convert", exact: true })).toBeEnabled();
+  await page.getByRole("button", { name: "Show all files", exact: true }).click();
+  await expect(page.locator(".file-row")).toHaveCount(2);
+  await expect(page.locator(".file-row.status-succeeded")).toHaveCount(1);
+  await expect(page.locator(".file-row.status-ready")).toHaveCount(1);
+  expect(
+    await page
+      .locator(".conversion-ledger")
+      .evaluate((node) => node.scrollWidth <= node.clientWidth + 1),
+  ).toBe(true);
+  await page.screenshot({ path: resolve(screenshotRoot, "recovery-minimum-dark.png") });
 });

@@ -85,6 +85,7 @@ try {
   await page.screenshot({ path: join(runRoot, "02-native-diagnostics.png") });
   await page.getByRole("button", { name: "Close engine diagnostics" }).click();
 
+  await page.getByText("Manual settings", { exact: false }).click();
   await page.getByRole("button", { name: "Keep transparency", exact: true }).click();
   await expect(page.getByRole("button", { name: "PNG. Keeps transparency" })).toHaveAttribute(
     "aria-pressed",

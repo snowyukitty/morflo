@@ -1,0 +1,133 @@
+{
+  "composition": "Branded title above one continuous, unaltered crop of real Tauri conversion results. The title and frame are presentation, not app controls.",
+  "sourceCapture": "ledger-detail.png",
+  "sourceSha256": "60be00e7379756d69e3881d19e3e5436f89db074deb4b2f54f93053b02a5b0c0",
+  "sourceCrop": {
+    "crop": {
+      "x": 30,
+      "y": 162.53125,
+      "width": 886,
+      "height": 513.4687805175781
+    },
+    "devicePixelRatio": 1.5,
+    "method": "Unaltered crop of actual Tauri client area, from the measured total to the three completed ledger rows."
+  },
+  "sourceEvidence": {
+    "sourceCommit": "fab497c453a7b5d8f9cdf7ab24782b533f923538",
+    "appSha256": "2d7c2ff362222676e1b09e9e51d859026f0fc56bce2cca41e27d8694f6a8889c",
+    "sourceHashes": [
+      "6c6d7569132170b8496ea5f98efbc71e9dad657da2767ed1b9cefc8d4dfee384",
+      "d6c713f818a06103bbd1e3e52ad2cbf0497bae6704cad6e2af00aa2e79ea1724",
+      "9641ad694594447882a4c0cdcbb996c2675c64547c086e5210b016b7957d385d"
+    ],
+    "sourceUnchanged": true,
+    "sources": [
+      "Coastal morning.png",
+      "Citrus study.png",
+      "Botanical cutout.png"
+    ],
+    "outputs": [
+      "Botanical cutout (2).png",
+      "Citrus study.jpg",
+      "Coastal morning.jpg"
+    ],
+    "outputMeasurements": [
+      {
+        "name": "Botanical cutout (2).png",
+        "sizeBytes": 78805,
+        "sha256": "1ff37c10459bec8cb887f907f5f4585ce7a05c9c4b4ecc30b4b68819f53844f7",
+        "probe": {
+          "programs": [],
+          "stream_groups": [],
+          "streams": [
+            {
+              "codec_name": "png",
+              "width": 1200,
+              "height": 1200,
+              "pix_fmt": "rgba"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Citrus study.jpg",
+        "sizeBytes": 61511,
+        "sha256": "bc1aecb2b7321daa590998cd4db5bf79b07d0032a58fdd7044dad8b415228ec8",
+        "probe": {
+          "programs": [],
+          "stream_groups": [],
+          "streams": [
+            {
+              "codec_name": "mjpeg",
+              "width": 1571,
+              "height": 1920,
+              "pix_fmt": "yuvj420p"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Coastal morning.jpg",
+        "sizeBytes": 52445,
+        "sha256": "ea6143ac628e12c957659623956c63c7ad8db4d518b45e9d6a9954691c72feb3",
+        "probe": {
+          "programs": [],
+          "stream_groups": [],
+          "streams": [
+            {
+              "codec_name": "mjpeg",
+              "width": 1920,
+              "height": 1280,
+              "pix_fmt": "yuvj420p"
+            }
+          ]
+        }
+      }
+    ],
+    "receipt": "Coastal morning.png\nPNG 333 KB\n2400 Ã— 1600\nOriginal file\nACTUAL OUTPUT\nJPEG51 KB\n1920 Ã— 1280\nCoastal morning.jpg\nâˆ’84.6%\nâˆ’282 KB\nConverted\nReveal\nCitrus study.png\nPNG 929 KB\n1800 Ã— 2200\nOriginal file\nACTUAL OUTPUT\nJPEG60 KB\n1571 Ã— 1920\nCitrus study.jpg\nâˆ’93.5%\nâˆ’869 KB\nConverted\nReveal\nBotanical cutout.png\nPNG 76 KB\n1200 Ã— 1200\nTransparency\nACTUAL OUTPUT\nPNG77 KB\n1200 Ã— 1200\nBotanical cutout (2).png\n+1.1%\n+838 B\nConverted\nReveal",
+    "provenance": {
+      "creator": "Snowy",
+      "license": "MIT OR Apache-2.0",
+      "source": "scripts/generate-showcase-samples.mjs",
+      "method": "Original procedural SVG illustrations rasterized locally in Chromium; no external media",
+      "samples": [
+        {
+          "name": "Coastal morning.png",
+          "width": 2400,
+          "height": 1600
+        },
+        {
+          "name": "Citrus study.png",
+          "width": 1800,
+          "height": 2200
+        },
+        {
+          "name": "Botanical cutout.png",
+          "width": 1200,
+          "height": 1200
+        }
+      ]
+    }
+  },
+  "placement": {
+    "x": 65,
+    "y": 98,
+    "width": 1070,
+    "height": 620
+  },
+  "resize": "Pillow Lanczos; uniform scaling, no retouching",
+  "sizes": [
+    [
+      1200,
+      750
+    ],
+    [
+      480,
+      300
+    ],
+    [
+      320,
+      200
+    ]
+  ]
+}

@@ -11,6 +11,14 @@ an implementation boundary and acceptance evidence. Dates are not promised.
 repository contribution paths. Common image processing remains built in.
 Public signed installers are a separate distribution milestone.
 
+The conversion-ledger implementation now places recognizable sources, planned
+targets and measured outputs in stable rows. Native showcase captures replace
+illustrative success claims. The next understandable-results milestone is user
+validation of this implemented design, not another screenshot-only redesign.
+Batch recovery now groups failed/canceled files, prepares retries for settings
+review, and keeps completed outputs intact. Clean-machine first-use evidence
+and voluntary usability validation remain the next priorities.
+
 ## Next priorities
 
 | Priority | Outcome                                 | Evidence required                                                                                                                                            |

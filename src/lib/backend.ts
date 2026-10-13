@@ -25,6 +25,7 @@ export async function chooseFiles(): Promise<string[]> {
         name: copy.dialogs.mediaFilter,
         extensions: [
           "png",
+          "gif",
           "jpg",
           "jpeg",
           "webp",

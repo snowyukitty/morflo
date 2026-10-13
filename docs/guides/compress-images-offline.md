@@ -9,7 +9,8 @@ are available in the 0.3.0 source checkpoint; see
 
 1. Add the JPEG and select it.
 2. Choose **Smaller file** under **What do you need?**
-3. Review **JPEG**, **Smaller** quality, and **Keep original dimensions**.
+3. Read the planned JPEG settings in its row; expand **Manual settings** to
+   review **Smaller** quality and **Keep original dimensions**.
 4. Convert and compare the actual bytes in the completion receipt.
 
 This deliberately permits JPEG to JPEG: the goal is a useful compressed copy,
@@ -22,7 +23,7 @@ compressed copy; start with the original when trying another setting.
 Choose **Easy to share**. Large images fit inside 1920 × 1920 px as a balanced
 JPEG, maintaining aspect ratio. A 4032 × 3024 image becomes 1920 × 1440; a
 640 × 420 image retains its dimensions. This outcome does not crop or enlarge.
-For another size, use the dimension controls after applying the outcome.
+For another size, expand **Manual settings** and use its dimension controls after applying the outcome.
 
 Resizing changes the available detail. Inspect the finished image before
 choosing it for printing or another task that needs the full resolution.

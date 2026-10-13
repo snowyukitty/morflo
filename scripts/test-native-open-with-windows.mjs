@@ -107,7 +107,7 @@ try {
   await page.getByRole("heading", { name: "Conversion queue" }).waitFor({ timeout: 30_000 });
   await page.locator(".file-identity strong", { hasText: imageName }).waitFor();
   await page.locator(".file-identity strong", { hasText: videoName }).waitFor();
-  await page.getByText("2 files", { exact: true }).waitFor();
+  await page.getByRole("button", { name: "All files 2", exact: true }).waitFor();
   const firstArrivalMs = Math.round(performance.now() - firstArrivalStarted);
   await page.screenshot({ path: join(runRoot, "02-native-open-with-joined.png") });
 
@@ -127,9 +127,9 @@ try {
     throw new Error(`The relative-path Morflo instance exited with code ${relativeExitCode}.`);
   }
   const relativeRow = page.locator(".file-row", { hasText: relativeName });
-  await relativeRow.locator(".file-identity strong").waitFor();
-  await page.getByText("3 files", { exact: true }).waitFor();
-  const relativeOutput = (await relativeRow.locator(".output-chip").textContent())?.trim();
+  await relativeRow.locator(".ledger-source .file-identity strong").waitFor();
+  await page.getByRole("button", { name: "All files 3", exact: true }).waitFor();
+  const relativeOutput = (await relativeRow.locator(".target-format").textContent())?.trim();
   if (relativeOutput !== "PNG") {
     throw new Error(`Transparent WebP should recommend PNG, received: ${relativeOutput}`);
   }

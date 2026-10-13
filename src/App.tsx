@@ -5,16 +5,13 @@ import {
   CheckCircle2,
   ChevronDown,
   CircleEllipsis,
-  Clock3,
   Copy,
-  FileImage,
   FileVideo,
   FolderOpen,
   Image as ImageIcon,
   Info,
   Layers3,
   Moon,
-  MoreHorizontal,
   Play,
   Plus,
   RefreshCw,
@@ -38,6 +35,7 @@ import {
   useState,
 } from "react";
 
+import { ConversionLedger } from "./ConversionLedger";
 import morfloMarkUrl from "../master.svg?url";
 import { version as appVersion } from "../package.json";
 import { copy } from "./i18n/en";
@@ -49,7 +47,6 @@ import {
   chooseOutputFolder,
   forgetSource,
   getCapabilities,
-  getImageThumbnail,
   getOutputPreview,
   getPosterFrame,
   getPreviewClip,
@@ -81,6 +78,7 @@ import {
   formatMomentTime,
 } from "./lib/format";
 import { loadPreferences, savePreferences, type PreferencesV1 } from "./lib/preferences";
+import { matchesLedgerView, needsAttention, type LedgerView } from "./lib/ledger";
 import {
   imageOutcomes,
   imageOutcomeSettings,
@@ -185,7 +183,7 @@ export function App() {
       demoState
         ? demoState === "engine-missing"
           ? missingDemoCapabilities
-          : demoState === "engine-native"
+          : demoState === "engine-native" || demoState === "video-unavailable"
             ? nativeDemoCapabilities
             : demoCapabilities
         : {
@@ -225,6 +223,10 @@ export function App() {
   const [dragActive, setDragActive] = useState(false);
   const [busyAdding, setBusyAdding] = useState(false);
   const [liveMessage, setLiveMessage] = useState("");
+  const [inspectorOpen, setInspectorOpen] = useState(true);
+  const [ledgerView, setLedgerView] = useState<LedgerView>("all");
+  const [preparingRetries, setPreparingRetries] = useState(false);
+  const retryPreparationRef = useRef(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [diagnosticsOpen, setDiagnosticsOpen] = useState(
     () => query.get("panel") === "diagnostics",
@@ -233,7 +235,6 @@ export function App() {
   const [engineError, setEngineError] = useState<ConversionError>();
   const [posterPreview, setPosterPreview] = useState<TimedPreview>();
   const [storyboardPreview, setStoryboardPreview] = useState<TimedStoryboard>();
-  const [imagePreview, setImagePreview] = useState<TimedPreview>();
   const [clipPreview, setClipPreview] = useState<TimedPreview>();
   const [outputPreview, setOutputPreview] = useState<TimedPreview>();
   const [previewLoadingId, setPreviewLoadingId] = useState<string>();
@@ -333,6 +334,7 @@ export function App() {
           ),
         }));
         setSelectedIds(new Set(inspected[0] ? [inspected[0].id] : []));
+        setLedgerView("all");
         setLiveMessage(copy.live.filesReady(inspected.length));
       } catch (error) {
         setLiveMessage(error instanceof Error ? error.message : copy.live.inspectFailed);
@@ -442,8 +444,13 @@ export function App() {
   const runningFiles = files.filter(
     (file) => file.status === "running" || file.status === "queued",
   );
-  const selectedFiles = files.filter((file) => selectedIds.has(file.id));
-  const activeFile = selectedFiles[0] ?? files[0];
+  const visibleFiles = files.filter((file) => matchesLedgerView(file, ledgerView));
+  const selectedFiles = visibleFiles.filter((file) => selectedIds.has(file.id));
+  const visibleSelectedIds = new Set(selectedFiles.map((file) => file.id));
+  const activeFile =
+    selectedFiles.find((file) => file.status === "ready") ??
+    selectedFiles[0] ??
+    visibleFiles[0];
   const activeSettings = activeFile ? settingsById[activeFile.id] : undefined;
   const activePosterKey =
     activeFile?.kind === "video" && activeSettings?.video.outputFormat === "gif"
@@ -457,26 +464,6 @@ export function App() {
     activeFile?.kind === "video" && activeSettings?.video.outputFormat === "gif"
       ? activeFile.id
       : undefined;
-
-  useEffect(() => {
-    if (demoState || !hasDesktopRuntime() || activeFile?.kind !== "image") return;
-    const jobId = activeFile.id;
-    if (imagePreview?.key === jobId) return;
-    let disposed = false;
-    const timer = window.setTimeout(() => {
-      void getImageThumbnail(jobId)
-        .then((url) => {
-          if (!disposed) setImagePreview({ key: jobId, url });
-        })
-        .catch(() => {
-          // Conversion remains available when a bounded source thumbnail cannot be decoded.
-        });
-    }, 80);
-    return () => {
-      disposed = true;
-      window.clearTimeout(timer);
-    };
-  }, [activeFile, demoState, imagePreview]);
 
   useEffect(() => {
     if (
@@ -563,14 +550,19 @@ export function App() {
       setSettingsById((current) => {
         const next = { ...current };
         for (const file of files) {
-          if (!selectedIds.has(file.id)) continue;
+          if (
+            !selectedIds.has(file.id) ||
+            !matchesLedgerView(file, ledgerView) ||
+            ["running", "queued", "succeeded"].includes(file.status)
+          )
+            continue;
           const settings = current[file.id];
           if (settings) next[file.id] = patcher(structuredClone(settings), file);
         }
         return next;
       });
     },
-    [files, selectedIds],
+    [files, selectedIds, ledgerView],
   );
 
   const removeFile = useCallback((id: string) => {
@@ -584,33 +576,39 @@ export function App() {
     setSettingsById((current) => {
       return Object.fromEntries(Object.entries(current).filter(([key]) => key !== id));
     });
-    setImagePreview((current) => (current?.key === id ? undefined : current));
     setPosterPreview((current) => (current?.key.startsWith(`${id}:`) ? undefined : current));
     setClipPreview((current) => (current?.key.startsWith(`${id}:`) ? undefined : current));
     setOutputPreview((current) => (current?.key === id ? undefined : current));
     window.setTimeout(() => {
       const nextRow = document.querySelector<HTMLButtonElement>(".file-row-main");
-      (nextRow ?? chooseButtonRef.current)?.focus();
+      (
+        nextRow ??
+        document.querySelector<HTMLButtonElement>(
+          ".ledger-views button[aria-pressed='true']",
+        ) ??
+        chooseButtonRef.current
+      )?.focus();
     }, 0);
   }, []);
 
   const clearQueue = useCallback(() => {
-    if (runningFiles.length > 0) return;
+    if (runningFiles.length > 0 || preparingRetries) return;
     void clearSession();
     setFiles([]);
     setSelectedIds(new Set());
+    setLedgerView("all");
     setSettingsById({});
-    setImagePreview(undefined);
     setPosterPreview(undefined);
     setClipPreview(undefined);
     setOutputPreview(undefined);
     setLiveMessage(copy.live.queueCleared);
     window.setTimeout(() => chooseButtonRef.current?.focus(), 0);
-  }, [runningFiles.length]);
+  }, [runningFiles.length, preparingRetries]);
 
   const startConversions = useCallback(async () => {
     const targets = readyFiles;
-    if (targets.length === 0 || !capabilities.engine.available) return;
+    if (targets.length === 0 || !capabilities.engine.available || retryPreparationRef.current)
+      return;
     setLiveMessage(copy.live.startingConversions(targets.length));
     setFiles((current) =>
       current.map((file) =>
@@ -705,17 +703,19 @@ export function App() {
   const retryFile = useCallback(
     async (id: string) => {
       const file = files.find((candidate) => candidate.id === id);
-      if (!file) return;
+      if (!file || !needsAttention(file)) return false;
       if (file.kind !== "unsupported" || demoState) {
         setFiles((current) =>
           updateFile(current, id, {
             status: "ready",
             phase: "Waiting",
             error: undefined,
+            progress: undefined,
+            output: undefined,
           }),
         );
         setLiveMessage(copy.live.retryReady(file.name));
-        return;
+        return true;
       }
 
       setFiles((current) =>
@@ -740,6 +740,7 @@ export function App() {
         } else {
           setLiveMessage(copy.live.stillNeedsAttention(inspected.name));
         }
+        return inspected.status === "ready";
       } catch (error) {
         const mapped = normalizeCommandError(error, {
           code: "engine_failed",
@@ -754,10 +755,55 @@ export function App() {
           }),
         );
         setLiveMessage(mapped.title);
+        return false;
       }
     },
     [demoState, files, preferences],
   );
+
+  const prepareRetries = useCallback(
+    async (ids: string[]) => {
+      if (retryPreparationRef.current) return;
+      retryPreparationRef.current = true;
+      setPreparingRetries(true);
+      const ready: string[] = [];
+      try {
+        // Retry inspection serially. Preparing never starts conversion or resets consent.
+        for (const id of ids) {
+          if (await retryFile(id)) ready.push(id);
+        }
+        if (ready.length > 0) {
+          setLedgerView("all");
+          setSelectedIds(new Set(ready));
+          setInspectorOpen(true);
+        }
+        setLiveMessage(
+          `${ready.length} ${ready.length === 1 ? "file is" : "files are"} ready to retry. ${ids.length - ready.length} still need attention. Review settings, then choose Convert for all ready files.`,
+        );
+        window.setTimeout(() => {
+          const target =
+            document.querySelector<HTMLButtonElement>(".file-row.is-selected .file-row-main") ??
+            document.querySelector<HTMLButtonElement>(
+              ".ledger-views button[aria-pressed='true']",
+            );
+          target?.focus();
+        }, 0);
+      } finally {
+        retryPreparationRef.current = false;
+        setPreparingRetries(false);
+      }
+    },
+    [retryFile],
+  );
+
+  const changeLedgerView = (view: LedgerView) => {
+    setLedgerView(view);
+    const visible = files.filter((file) => matchesLedgerView(file, view));
+    const retained = visible.filter((file) => selectedIds.has(file.id));
+    setSelectedIds(
+      new Set((retained.length ? retained : visible.slice(0, 1)).map((file) => file.id)),
+    );
+  };
 
   useEffect(() => {
     const onKeyDown = (event: globalThis.KeyboardEvent) => {
@@ -780,7 +826,11 @@ export function App() {
         setSettingsOpen(true);
       }
       if (event.key === "Escape" && settingsOpen) closeSettings();
-      if (!editing && (event.key === "Delete" || event.key === "Backspace")) {
+      if (
+        !editing &&
+        !preparingRetries &&
+        (event.key === "Delete" || event.key === "Backspace")
+      ) {
         const removable = selectedFiles.filter(
           (file) => !["running", "queued", "probing"].includes(file.status),
         );
@@ -800,6 +850,7 @@ export function App() {
     selectedFiles,
     settingsOpen,
     startConversions,
+    preparingRetries,
   ]);
 
   const toggleSelected = (id: string) => {
@@ -863,7 +914,14 @@ export function App() {
         />
       ) : null}
 
-      <main id="main-content" className={files.length === 0 ? "empty-main" : "workspace-main"}>
+      <main
+        id="main-content"
+        className={
+          files.length === 0
+            ? "empty-main"
+            : `workspace-main${inspectorOpen ? "" : " inspector-hidden"}`
+        }
+      >
         {files.length === 0 ? (
           <EmptyState
             engineAvailable={
@@ -878,56 +936,65 @@ export function App() {
           />
         ) : (
           <>
-            <QueuePanel
+            <ConversionLedger
+              inspectorOpen={inspectorOpen}
+              onInspectorToggle={() => setInspectorOpen((value) => !value)}
               files={files}
               settingsById={settingsById}
-              selectedIds={selectedIds}
+              selectedIds={visibleSelectedIds}
+              view={ledgerView}
+              onViewChange={changeLedgerView}
+              onPrepareRetries={(ids) => void prepareRetries(ids)}
+              preparingRetries={preparingRetries}
               onToggleSelected={toggleSelected}
-              onSelectOnly={selectOnly}
+              onSelectOnly={(id) => {
+                selectOnly(id);
+                setInspectorOpen(true);
+              }}
               onRemove={removeFile}
               onChoose={() => void handleChooseFiles()}
               onClear={clearQueue}
               onReveal={(id) => void revealOutput(id)}
-              onRetry={(id) => void retryFile(id)}
+              onRetry={(id) => void prepareRetries([id])}
               onCancel={(id) => void cancelOne(id)}
             />
-            <Inspector
-              file={activeFile}
-              selectedFiles={selectedFiles}
-              selectedCount={selectedFiles.length}
-              settings={activeSettings}
-              capabilities={capabilities}
-              onSettings={patchSelectedSettings}
-              onReveal={(id) => void revealOutput(id)}
-              imagePreview={
-                activeFile && imagePreview?.key === activeFile.id ? imagePreview.url : undefined
-              }
-              posterPreview={
-                activePosterKey && posterPreview?.key === activePosterKey
-                  ? posterPreview.url
-                  : undefined
-              }
-              storyboardFrames={
-                activeStoryboardKey && storyboardPreview?.key === activeStoryboardKey
-                  ? storyboardPreview.urls
-                  : undefined
-              }
-              storyboardLoading={activeFile?.id === storyboardLoadingId}
-              storyboardDemo={Boolean(demoState)}
-              clipPreview={
-                activeClipKey && clipPreview?.key === activeClipKey
-                  ? clipPreview.url
-                  : undefined
-              }
-              outputPreview={
-                activeFile && outputPreview?.key === activeFile.id
-                  ? outputPreview.url
-                  : undefined
-              }
-              previewLoading={activeFile?.id === previewLoadingId}
-              onPreview={(file, gif) => void previewGifRange(file, gif)}
-              onRetry={(id) => void retryFile(id)}
-            />
+            {inspectorOpen ? (
+              <Inspector
+                file={activeFile}
+                selectedFiles={selectedFiles}
+                selectedCount={selectedFiles.length}
+                settings={activeSettings}
+                capabilities={capabilities}
+                onSettings={patchSelectedSettings}
+                onReveal={(id) => void revealOutput(id)}
+                posterPreview={
+                  activePosterKey && posterPreview?.key === activePosterKey
+                    ? posterPreview.url
+                    : undefined
+                }
+                storyboardFrames={
+                  activeStoryboardKey && storyboardPreview?.key === activeStoryboardKey
+                    ? storyboardPreview.urls
+                    : undefined
+                }
+                storyboardLoading={activeFile?.id === storyboardLoadingId}
+                storyboardDemo={Boolean(demoState)}
+                clipPreview={
+                  activeClipKey && clipPreview?.key === activeClipKey
+                    ? clipPreview.url
+                    : undefined
+                }
+                outputPreview={
+                  activeFile && outputPreview?.key === activeFile.id
+                    ? outputPreview.url
+                    : undefined
+                }
+                previewLoading={activeFile?.id === previewLoadingId}
+                onDiagnostics={openDiagnostics}
+                onPreview={(file, gif) => void previewGifRange(file, gif)}
+                onRetry={(id) => void prepareRetries([id])}
+              />
+            ) : null}
           </>
         )}
       </main>
@@ -935,6 +1002,7 @@ export function App() {
       {files.length > 0 ? (
         <ActionBar
           files={files}
+          preparingRetries={preparingRetries}
           engine={capabilities.engine}
           onConvert={() => void startConversions()}
           onCancelAll={() => void cancelAll()}
@@ -1146,243 +1214,8 @@ function Journey({ from, to }: { from: string; to: string }) {
   );
 }
 
-interface QueuePanelProps {
-  files: MediaFile[];
-  settingsById: Record<string, ConversionSettings>;
-  selectedIds: Set<string>;
-  onToggleSelected: (id: string) => void;
-  onSelectOnly: (id: string) => void;
-  onRemove: (id: string) => void;
-  onChoose: () => void;
-  onClear: () => void;
-  onReveal: (id: string) => void;
-  onRetry: (id: string) => void;
-  onCancel: (id: string) => void;
-}
-
-function QueuePanel({
-  files,
-  settingsById,
-  selectedIds,
-  onToggleSelected,
-  onSelectOnly,
-  onRemove,
-  onChoose,
-  onClear,
-  onReveal,
-  onRetry,
-  onCancel,
-}: QueuePanelProps) {
-  const running = files.some((file) => ["running", "queued", "probing"].includes(file.status));
-  return (
-    <section className="queue-panel" aria-labelledby="queue-title">
-      <div className="section-heading">
-        <div>
-          <p className="eyebrow">{copy.queue.eyebrow}</p>
-          <h1 id="queue-title">{copy.conversionQueue}</h1>
-        </div>
-        <div className="section-tools">
-          <button className="secondary-button compact" type="button" onClick={onChoose}>
-            <Plus size={16} />
-            {copy.addFiles}
-          </button>
-          <button
-            className="text-button"
-            type="button"
-            onClick={onClear}
-            disabled={running}
-            title={running ? copy.accessibility.cancelBeforeClear : undefined}
-          >
-            {copy.clearQueue}
-          </button>
-        </div>
-      </div>
-      <div className="queue-summary">
-        <span>{copy.queue.count(files.length)}</span>
-        <span className="summary-dot" aria-hidden="true" />
-        <span>{copy.queue.selected(selectedIds.size)}</span>
-        <button
-          className="text-button select-all"
-          type="button"
-          onClick={() => {
-            for (const file of files) if (!selectedIds.has(file.id)) onToggleSelected(file.id);
-          }}
-        >
-          {copy.selectAll}
-        </button>
-      </div>
-      <div className="file-list" role="list" aria-label={copy.accessibility.filesToConvert}>
-        {files.map((file) => (
-          <QueueRow
-            key={file.id}
-            file={file}
-            settings={settingsById[file.id]}
-            selected={selectedIds.has(file.id)}
-            onToggleSelected={() => onToggleSelected(file.id)}
-            onSelect={() => onSelectOnly(file.id)}
-            onRemove={() => onRemove(file.id)}
-            onReveal={() => onReveal(file.id)}
-            onRetry={() => onRetry(file.id)}
-            onCancel={() => onCancel(file.id)}
-          />
-        ))}
-      </div>
-    </section>
-  );
-}
-
-interface QueueRowProps {
-  file: MediaFile;
-  settings?: ConversionSettings | undefined;
-  selected: boolean;
-  onToggleSelected: () => void;
-  onSelect: () => void;
-  onRemove: () => void;
-  onReveal: () => void;
-  onRetry: () => void;
-  onCancel: () => void;
-}
-
-function QueueRow({
-  file,
-  settings,
-  selected,
-  onToggleSelected,
-  onSelect,
-  onRemove,
-  onReveal,
-  onRetry,
-  onCancel,
-}: QueueRowProps) {
-  const output =
-    file.output?.format ??
-    (file.kind === "image" ? settings?.image.outputFormat : settings?.video.outputFormat);
-  const outputName = output ? outputLabels[output] : "—";
-  const isTerminal =
-    file.status === "succeeded" || file.status === "failed" || file.status === "canceled";
-  const isActive =
-    file.status === "running" || file.status === "queued" || file.status === "probing";
-  return (
-    <article
-      className={`file-row status-${file.status}${selected ? " is-selected" : ""}`}
-      role="listitem"
-      aria-current={selected ? "true" : undefined}
-    >
-      <label className="select-check" title={copy.selectFile}>
-        <input
-          type="checkbox"
-          checked={selected}
-          onChange={onToggleSelected}
-          aria-label={copy.accessibility.select(file.name)}
-        />
-        <span>
-          <Check size={12} />
-        </span>
-      </label>
-      <button className="file-row-main" type="button" onClick={onSelect}>
-        <span className={`file-kind kind-${file.kind}`} aria-hidden="true">
-          {file.kind === "video" ? <FileVideo size={21} /> : <FileImage size={21} />}
-        </span>
-        <span className="file-identity">
-          <strong title={file.name}>{file.name}</strong>
-          <span>
-            {extensionLabel(file.extension)}
-            {file.width && file.height ? ` · ${formatDimensions(file.width, file.height)}` : ""}
-            {file.durationSeconds ? ` · ${formatDuration(file.durationSeconds)}` : ""}
-            {` · ${formatBytes(file.sizeBytes)}`}
-          </span>
-        </span>
-        <span
-          className="conversion-arrow"
-          aria-label={copy.accessibility.convertTo(outputName)}
-        >
-          →
-        </span>
-        <span className="output-chip">{outputName}</span>
-      </button>
-      <div className="row-state">
-        <StatusGlyph status={file.status} />
-        <span>{copy.phases[file.phase]}</span>
-        {file.status === "succeeded" && file.output ? (
-          <span className="result-size">
-            {copy.queue.outputSize(formatBytes(file.output.sizeBytes))}
-          </span>
-        ) : null}
-        {file.progress !== undefined && file.status === "running" ? (
-          <span className="progress-number">{Math.round(file.progress * 100)}%</span>
-        ) : null}
-      </div>
-      {file.status === "running" && file.progress !== undefined ? (
-        <progress
-          className="row-progress"
-          max={1}
-          value={file.progress}
-          aria-label={copy.accessibility.progress(file.name)}
-        />
-      ) : null}
-      <div className="row-actions">
-        {file.status === "succeeded" ? (
-          <button
-            className="icon-button small"
-            type="button"
-            onClick={onReveal}
-            aria-label={copy.accessibility.reveal(file.name)}
-            title={copy.reveal}
-          >
-            <FolderOpen size={16} />
-          </button>
-        ) : null}
-        {file.status === "failed" ? (
-          <button
-            className="icon-button small"
-            type="button"
-            onClick={onRetry}
-            aria-label={copy.accessibility.retry(file.name)}
-            title={copy.tryAgain}
-          >
-            <RefreshCw size={16} />
-          </button>
-        ) : null}
-        {file.status === "probing" ? null : isActive ? (
-          <button
-            className="icon-button small"
-            type="button"
-            onClick={onCancel}
-            aria-label={copy.accessibility.cancel(file.name)}
-            title={copy.accessibility.cancelConversion}
-          >
-            <Square size={14} />
-          </button>
-        ) : (
-          <button
-            className="icon-button small"
-            type="button"
-            onClick={onRemove}
-            aria-label={copy.accessibility.remove(file.name)}
-            title={copy.remove}
-          >
-            <X size={16} />
-          </button>
-        )}
-        {!isTerminal && !isActive ? <MoreHorizontal size={16} aria-hidden="true" /> : null}
-      </div>
-    </article>
-  );
-}
-
-function StatusGlyph({ status }: { status: MediaFile["status"] }) {
-  if (status === "succeeded")
-    return <CheckCircle2 className="status-icon success" size={16} aria-hidden="true" />;
-  if (status === "failed")
-    return <AlertCircle className="status-icon danger" size={16} aria-hidden="true" />;
-  if (status === "running" || status === "probing")
-    return <CircleEllipsis className="status-icon accent spin" size={16} aria-hidden="true" />;
-  if (status === "canceled")
-    return <Square className="status-icon muted" size={14} aria-hidden="true" />;
-  return <Clock3 className="status-icon muted" size={15} aria-hidden="true" />;
-}
-
 interface InspectorProps {
+  onDiagnostics: (trigger: HTMLButtonElement) => void;
   file?: MediaFile | undefined;
   selectedFiles: MediaFile[];
   selectedCount: number;
@@ -1393,7 +1226,6 @@ interface InspectorProps {
   ) => void;
   onReveal: (id: string) => void;
   onRetry: (id: string) => void;
-  imagePreview?: string | undefined;
   posterPreview?: string | undefined;
   storyboardFrames?: string[] | undefined;
   storyboardLoading: boolean;
@@ -1405,6 +1237,7 @@ interface InspectorProps {
 }
 
 function Inspector({
+  onDiagnostics,
   file,
   selectedFiles,
   selectedCount,
@@ -1413,7 +1246,6 @@ function Inspector({
   onSettings,
   onReveal,
   onRetry,
-  imagePreview,
   posterPreview,
   storyboardFrames,
   storyboardLoading,
@@ -1423,7 +1255,7 @@ function Inspector({
   previewLoading,
   onPreview,
 }: InspectorProps) {
-  if (!file || !settings) {
+  if (!file || !settings || selectedCount === 0) {
     return (
       <aside className="inspector empty-inspector">
         <Layers3 size={28} />
@@ -1448,11 +1280,13 @@ function Inspector({
       <div className="inspector-header">
         <div>
           <p className="eyebrow">
-            {terminalSelection
-              ? copy.inspector.batchResult
-              : selectedCount > 1
-                ? copy.inspector.groupSettings
-                : copy.inspector.selectedFile}
+            {terminalSelection && selectedFiles.every(needsAttention)
+              ? "Batch recovery"
+              : terminalSelection
+                ? copy.inspector.batchResult
+                : selectedCount > 1
+                  ? copy.inspector.groupSettings
+                  : copy.inspector.selectedFile}
           </p>
           <h2 id="inspector-title" title={headerTitle}>
             {headerTitle}
@@ -1465,49 +1299,90 @@ function Inspector({
             ? copy.inspector.batch
             : file.kind === "video"
               ? copy.inspector.video
-              : copy.inspector.image}
+              : file.kind === "unsupported"
+                ? "File"
+                : copy.inspector.image}
         </span>
       </div>
 
-      {terminalSelection ? (
-        <BatchCompletionPanel files={selectedFiles} />
-      ) : file.status === "succeeded" ? (
-        <CompletionPanel
-          file={file}
-          previewUrl={outputPreview}
-          destination={settings.destination}
-          onReveal={() => onReveal(file.id)}
-        />
-      ) : file.status === "failed" && file.error ? (
-        <ErrorPanel file={file} onRetry={() => onRetry(file.id)} />
-      ) : file.kind === "image" ? (
-        <ImageInspector
-          file={file}
-          settings={settings.image}
-          capabilities={capabilities}
-          previewUrl={imagePreview}
-          onSettings={onSettings}
-        />
-      ) : (
-        <VideoInspector
-          file={file}
-          settings={settings.video}
-          gif={settings.gif}
-          capabilities={capabilities}
-          onSettings={onSettings}
-          posterPreview={posterPreview}
-          storyboardFrames={storyboardFrames}
-          storyboardLoading={storyboardLoading}
-          storyboardDemo={storyboardDemo}
-          clipPreview={clipPreview}
-          previewLoading={previewLoading}
-          onPreview={onPreview}
-        />
-      )}
+      <fieldset
+        className="inspector-controls"
+        disabled={
+          file.status === "running" || file.status === "queued" || file.status === "probing"
+        }
+      >
+        <legend className="sr-only">Selected file controls</legend>
+        {terminalSelection && selectedFiles.every(needsAttention) ? (
+          <div className="inspector-content batch-recovery">
+            <TriangleAlert size={26} aria-hidden="true" />
+            <h3>{selectedCount} files need attention</h3>
+            <p>
+              {selectedFiles.filter((selected) => selected.status === "failed").length} failed ·{" "}
+              {selectedFiles.filter((selected) => selected.status === "canceled").length}{" "}
+              canceled
+            </p>
+            <p>
+              Completed outputs stay in the ledger. These files keep their current conversion
+              settings.
+            </p>
+            <ol>
+              <li>
+                Select a file to inspect its error, or check that its source is still available.
+              </li>
+              <li>
+                Choose <strong>Needs attention</strong>, then <strong>Prepare retries</strong>.
+              </li>
+              <li>
+                Review the settings, then choose <strong>Convert</strong> for all ready files.
+              </li>
+            </ol>
+            <p className="recovery-safety">
+              <ShieldCheck size={15} aria-hidden="true" /> Your originals stay untouched.
+            </p>
+          </div>
+        ) : terminalSelection ? (
+          <BatchCompletionPanel files={selectedFiles} />
+        ) : file.status === "succeeded" ? (
+          <CompletionPanel
+            file={file}
+            previewUrl={outputPreview}
+            destination={settings.destination}
+            onReveal={() => onReveal(file.id)}
+          />
+        ) : file.status === "failed" && file.error ? (
+          <ErrorPanel
+            file={file}
+            onRetry={() => onRetry(file.id)}
+            onDiagnostics={onDiagnostics}
+          />
+        ) : file.kind === "image" ? (
+          <ImageInspector
+            file={file}
+            settings={settings.image}
+            capabilities={capabilities}
+            onSettings={onSettings}
+          />
+        ) : (
+          <VideoInspector
+            file={file}
+            settings={settings.video}
+            gif={settings.gif}
+            capabilities={capabilities}
+            onSettings={onSettings}
+            posterPreview={posterPreview}
+            storyboardFrames={storyboardFrames}
+            storyboardLoading={storyboardLoading}
+            storyboardDemo={storyboardDemo}
+            clipPreview={clipPreview}
+            previewLoading={previewLoading}
+            onPreview={onPreview}
+          />
+        )}
 
-      {!terminalSelection && file.status !== "succeeded" && file.status !== "failed" ? (
-        <DestinationPanel settings={settings} onSettings={onSettings} />
-      ) : null}
+        {!terminalSelection && file.status !== "succeeded" && file.status !== "failed" ? (
+          <DestinationPanel settings={settings} onSettings={onSettings} />
+        ) : null}
+      </fieldset>
     </aside>
   );
 }
@@ -1516,25 +1391,17 @@ function ImageInspector({
   file,
   settings,
   capabilities,
-  previewUrl,
   onSettings,
 }: {
   file: MediaFile;
   settings: ImageSettings;
   capabilities: CapabilityRegistry;
-  previewUrl?: string | undefined;
   onSettings: InspectorProps["onSettings"];
 }) {
   const formats: ImageSettings["outputFormat"][] = ["jpeg", "png", "webp", "avif", "ico"];
   const alphaFlatten = Boolean(file.hasAlpha && settings.outputFormat === "jpeg");
   return (
     <div className="inspector-content">
-      {previewUrl ? (
-        <div className="image-source-preview">
-          <img src={previewUrl} alt={copy.accessibility.imagePreview(file.name)} />
-          <span>{copy.image.localPreview}</span>
-        </div>
-      ) : null}
       <SettingGroup title={copy.image.outcomeTitle}>
         <div className="image-outcomes" role="group" aria-label={copy.image.outcomeTitle}>
           {imageOutcomes.map((outcome) => {
@@ -1590,47 +1457,6 @@ function ImageInspector({
         </div>
         <p className="field-note">{copy.image.outcomeNote}</p>
       </SettingGroup>
-      <SettingGroup title={copy.image.outputFormat} hint={copy.image.recommended}>
-        <div className="format-grid">
-          {formats.map((format) => {
-            const capability = capabilities.outputs.find((item) => item.format === format);
-            const available = capability?.available ?? false;
-            const description =
-              format === "jpeg"
-                ? copy.image.jpegDescription
-                : format === "png" && file.hasAlpha
-                  ? copy.image.pngAlphaDescription
-                  : format === "webp"
-                    ? copy.image.webpDescription
-                    : format === "ico"
-                      ? copy.image.icoDescription
-                      : undefined;
-            return (
-              <button
-                key={format}
-                className={`format-choice${settings.outputFormat === format ? " is-selected" : ""}`}
-                type="button"
-                disabled={!available}
-                aria-pressed={settings.outputFormat === format}
-                title={!available ? capability?.reason : undefined}
-                aria-label={
-                  description ? `${outputLabels[format]}. ${description}` : outputLabels[format]
-                }
-                onClick={() =>
-                  onSettings((all, current) => {
-                    if (current.kind === "image") all.image.outputFormat = format;
-                    return all;
-                  })
-                }
-              >
-                <span>{outputLabels[format]}</span>
-                {description ? <small>{description}</small> : null}
-              </button>
-            );
-          })}
-        </div>
-      </SettingGroup>
-
       {alphaFlatten ? (
         <div className="warning-card" role="note">
           <div className="warning-heading">
@@ -1690,148 +1516,198 @@ function ImageInspector({
         </div>
       ) : null}
 
-      {settings.outputFormat !== "png" && settings.outputFormat !== "ico" ? (
-        <QualitySelector
-          value={settings.quality}
-          onChange={(quality) =>
-            onSettings((all) => {
-              all.image.quality = quality;
-              return all;
-            })
-          }
-        />
-      ) : null}
-
-      {settings.outputFormat !== "ico" ? (
-        <SettingGroup title={copy.image.dimensions}>
-          <label className="select-field">
-            <span className="sr-only">{copy.image.resizeMode}</span>
-            <select
-              value={settings.resizeMode}
-              onChange={(event) => {
-                const resizeMode = event.currentTarget.value as ResizeMode;
-                onSettings((all) => {
-                  all.image.resizeMode = resizeMode;
-                  if (
-                    (resizeMode === "width" ||
-                      resizeMode === "contain" ||
-                      resizeMode === "cover") &&
-                    all.image.width === undefined
-                  ) {
-                    all.image.width = file.width ?? 1280;
+      <details className="manual-settings">
+        <summary>
+          Manual settings <span>Format · quality · dimensions</span>
+        </summary>
+        <SettingGroup title={copy.image.outputFormat} hint={copy.image.recommended}>
+          <div className="format-grid">
+            {formats.map((format) => {
+              const capability = capabilities.outputs.find((item) => item.format === format);
+              const available = capability?.available ?? false;
+              const description =
+                format === "jpeg"
+                  ? copy.image.jpegDescription
+                  : format === "png" && file.hasAlpha
+                    ? copy.image.pngAlphaDescription
+                    : format === "webp"
+                      ? copy.image.webpDescription
+                      : format === "ico"
+                        ? copy.image.icoDescription
+                        : undefined;
+              return (
+                <button
+                  key={format}
+                  className={`format-choice${settings.outputFormat === format ? " is-selected" : ""}`}
+                  type="button"
+                  disabled={!available}
+                  aria-pressed={settings.outputFormat === format}
+                  title={!available ? capability?.reason : undefined}
+                  aria-label={
+                    description
+                      ? `${outputLabels[format]}. ${description}`
+                      : outputLabels[format]
                   }
-                  if (
-                    (resizeMode === "height" ||
-                      resizeMode === "contain" ||
-                      resizeMode === "cover") &&
-                    all.image.height === undefined
-                  ) {
-                    all.image.height = file.height ?? 720;
+                  onClick={() =>
+                    onSettings((all, current) => {
+                      if (current.kind === "image") all.image.outputFormat = format;
+                      return all;
+                    })
                   }
-                  if (resizeMode === "percentage" && all.image.percentage === undefined) {
-                    all.image.percentage = 75;
-                  }
-                  return all;
-                });
-              }}
-            >
-              <option value="original">{copy.image.original}</option>
-              <option value="width">{copy.image.setWidth}</option>
-              <option value="height">{copy.image.setHeight}</option>
-              <option value="percentage">{copy.image.percentage}</option>
-              <option value="contain">{copy.image.contain}</option>
-              <option value="cover">{copy.image.cover}</option>
-            </select>
-            <ChevronDown size={16} aria-hidden="true" />
-          </label>
-          {settings.resizeMode !== "original" ? (
-            <div className="dimension-fields">
-              {settings.resizeMode === "width" ||
-              settings.resizeMode === "contain" ||
-              settings.resizeMode === "cover" ? (
-                <label>
-                  <span>{copy.image.width}</span>
-                  <input
-                    type="number"
-                    min={1}
-                    max={32768}
-                    step={1}
-                    value={settings.width ?? ""}
-                    onChange={(event) => {
-                      const width = Number(event.currentTarget.value);
-                      onSettings((all) => {
-                        all.image.width = Number.isFinite(width) ? width : undefined;
-                        return all;
-                      });
-                    }}
-                  />
-                  <small>{copy.units.pixels}</small>
-                </label>
-              ) : null}
-              {settings.resizeMode === "height" ||
-              settings.resizeMode === "contain" ||
-              settings.resizeMode === "cover" ? (
-                <label>
-                  <span>{copy.image.height}</span>
-                  <input
-                    type="number"
-                    min={1}
-                    max={32768}
-                    step={1}
-                    value={settings.height ?? ""}
-                    onChange={(event) => {
-                      const height = Number(event.currentTarget.value);
-                      onSettings((all) => {
-                        all.image.height = Number.isFinite(height) ? height : undefined;
-                        return all;
-                      });
-                    }}
-                  />
-                  <small>{copy.units.pixels}</small>
-                </label>
-              ) : null}
-              {settings.resizeMode === "percentage" ? (
-                <label>
-                  <span>{copy.image.scale}</span>
-                  <input
-                    type="number"
-                    min={1}
-                    max={400}
-                    step={1}
-                    value={settings.percentage ?? ""}
-                    onChange={(event) => {
-                      const percentage = Number(event.currentTarget.value);
-                      onSettings((all) => {
-                        all.image.percentage = Number.isFinite(percentage)
-                          ? percentage
-                          : undefined;
-                        return all;
-                      });
-                    }}
-                  />
-                  <small>{copy.units.percent}</small>
-                </label>
-              ) : null}
-            </div>
-          ) : null}
-          <p className="field-note">{copy.image.aspectNote}</p>
+                >
+                  <span>{outputLabels[format]}</span>
+                  {description ? <small>{description}</small> : null}
+                </button>
+              );
+            })}
+          </div>
         </SettingGroup>
-      ) : null}
 
-      {settings.outputFormat !== "ico" ? (
-        <MetadataSelector
-          value={settings.metadata}
-          onChange={(metadata) =>
-            onSettings((all) => {
-              all.image.metadata = metadata;
-              return all;
-            })
-          }
-        />
-      ) : null}
+        {settings.outputFormat !== "png" && settings.outputFormat !== "ico" ? (
+          <QualitySelector
+            value={settings.quality}
+            onChange={(quality) =>
+              onSettings((all) => {
+                all.image.quality = quality;
+                return all;
+              })
+            }
+          />
+        ) : null}
+
+        {settings.outputFormat !== "ico" ? (
+          <SettingGroup title={copy.image.dimensions}>
+            <label className="select-field">
+              <span className="sr-only">{copy.image.resizeMode}</span>
+              <select
+                value={settings.resizeMode}
+                onChange={(event) => {
+                  const resizeMode = event.currentTarget.value as ResizeMode;
+                  onSettings((all) => {
+                    all.image.resizeMode = resizeMode;
+                    if (
+                      (resizeMode === "width" ||
+                        resizeMode === "contain" ||
+                        resizeMode === "cover") &&
+                      all.image.width === undefined
+                    ) {
+                      all.image.width = file.width ?? 1280;
+                    }
+                    if (
+                      (resizeMode === "height" ||
+                        resizeMode === "contain" ||
+                        resizeMode === "cover") &&
+                      all.image.height === undefined
+                    ) {
+                      all.image.height = file.height ?? 720;
+                    }
+                    if (resizeMode === "percentage" && all.image.percentage === undefined) {
+                      all.image.percentage = 75;
+                    }
+                    return all;
+                  });
+                }}
+              >
+                <option value="original">{copy.image.original}</option>
+                <option value="width">{copy.image.setWidth}</option>
+                <option value="height">{copy.image.setHeight}</option>
+                <option value="percentage">{copy.image.percentage}</option>
+                <option value="contain">{copy.image.contain}</option>
+                <option value="cover">{copy.image.cover}</option>
+              </select>
+              <ChevronDown size={16} aria-hidden="true" />
+            </label>
+            {settings.resizeMode !== "original" ? (
+              <div className="dimension-fields">
+                {settings.resizeMode === "width" ||
+                settings.resizeMode === "contain" ||
+                settings.resizeMode === "cover" ? (
+                  <label>
+                    <span>{copy.image.width}</span>
+                    <input
+                      type="number"
+                      min={1}
+                      max={32768}
+                      step={1}
+                      value={settings.width ?? ""}
+                      onChange={(event) => {
+                        const width = Number(event.currentTarget.value);
+                        onSettings((all) => {
+                          all.image.width = Number.isFinite(width) ? width : undefined;
+                          return all;
+                        });
+                      }}
+                    />
+                    <small>{copy.units.pixels}</small>
+                  </label>
+                ) : null}
+                {settings.resizeMode === "height" ||
+                settings.resizeMode === "contain" ||
+                settings.resizeMode === "cover" ? (
+                  <label>
+                    <span>{copy.image.height}</span>
+                    <input
+                      type="number"
+                      min={1}
+                      max={32768}
+                      step={1}
+                      value={settings.height ?? ""}
+                      onChange={(event) => {
+                        const height = Number(event.currentTarget.value);
+                        onSettings((all) => {
+                          all.image.height = Number.isFinite(height) ? height : undefined;
+                          return all;
+                        });
+                      }}
+                    />
+                    <small>{copy.units.pixels}</small>
+                  </label>
+                ) : null}
+                {settings.resizeMode === "percentage" ? (
+                  <label>
+                    <span>{copy.image.scale}</span>
+                    <input
+                      type="number"
+                      min={1}
+                      max={400}
+                      step={1}
+                      value={settings.percentage ?? ""}
+                      onChange={(event) => {
+                        const percentage = Number(event.currentTarget.value);
+                        onSettings((all) => {
+                          all.image.percentage = Number.isFinite(percentage)
+                            ? percentage
+                            : undefined;
+                          return all;
+                        });
+                      }}
+                    />
+                    <small>{copy.units.percent}</small>
+                  </label>
+                ) : null}
+              </div>
+            ) : null}
+            <p className="field-note">{copy.image.aspectNote}</p>
+          </SettingGroup>
+        ) : null}
+
+        {settings.outputFormat !== "ico" ? (
+          <MetadataSelector
+            value={settings.metadata}
+            onChange={(metadata) =>
+              onSettings((all) => {
+                all.image.metadata = metadata;
+                return all;
+              })
+            }
+          />
+        ) : null}
+      </details>
 
       <Warnings
-        warnings={file.warnings.filter((warning) => warning.code !== "alpha-flatten")}
+        warnings={file.warnings.filter(
+          (warning) => warning.code !== "alpha-flatten" && warning.code !== "animated-input",
+        )}
       />
       <TechnicalDetails file={file} output={outputLabels[settings.outputFormat]} />
     </div>
@@ -2739,7 +2615,15 @@ function formatOutputMeasure(output: OutputSummary): string | undefined {
   return facts.length > 0 ? facts.join(" · ") : undefined;
 }
 
-function ErrorPanel({ file, onRetry }: { file: MediaFile; onRetry: () => void }) {
+function ErrorPanel({
+  file,
+  onRetry,
+  onDiagnostics,
+}: {
+  file: MediaFile;
+  onRetry: () => void;
+  onDiagnostics: (trigger: HTMLButtonElement) => void;
+}) {
   const details = file.error?.technicalDetails ?? copy.technical.noDetails;
   return (
     <div className="error-panel" role="alert">
@@ -2747,8 +2631,23 @@ function ErrorPanel({ file, onRetry }: { file: MediaFile; onRetry: () => void })
         <AlertCircle size={27} />
       </div>
       <p className="eyebrow">{copy.error.eyebrow}</p>
-      <h3>{file.error?.title}</h3>
+      <h3>
+        {file.error?.code === "engine_missing"
+          ? "Video needs a local media engine"
+          : file.error?.title}
+      </h3>
       <p>{file.error?.message}</p>
+      {file.error?.code === "engine_missing" ? (
+        <div className="engine-recovery">
+          <p>Your original is safe. Images still work with the built-in engine.</p>
+          <button
+            className="secondary-button"
+            onClick={(event) => onDiagnostics(event.currentTarget)}
+          >
+            Set up video conversion
+          </button>
+        </div>
+      ) : null}
       <button className="primary-button" type="button" onClick={onRetry}>
         <RefreshCw size={17} />
         {copy.tryAgain}
@@ -2776,12 +2675,14 @@ function ErrorPanel({ file, onRetry }: { file: MediaFile; onRetry: () => void })
 
 function ActionBar({
   files,
+  preparingRetries,
   engine,
   onConvert,
   onCancelAll,
   onDiagnostics,
 }: {
   files: MediaFile[];
+  preparingRetries: boolean;
   engine: CapabilityRegistry["engine"];
   onConvert: () => void;
   onCancelAll: () => void;
@@ -2861,7 +2762,7 @@ function ActionBar({
         <button
           className="primary-button convert-button"
           type="button"
-          disabled={ready === 0 || !engine.available}
+          disabled={ready === 0 || !engine.available || preparingRetries}
           onClick={onConvert}
           title={copy.accessibility.convertShortcut}
         >
@@ -2870,7 +2771,7 @@ function ActionBar({
           ) : (
             <Play size={16} fill="currentColor" />
           )}
-          {convertLabel}
+          {preparingRetries ? "Preparing retries…" : convertLabel}
         </button>
       </div>
     </footer>

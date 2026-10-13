@@ -137,9 +137,17 @@ downloaded or committed.
 ## Quality checkpoint
 
 Run `pnpm verify:quality` for formatting, lint, types, Rust, unit/integration and
-browser checks, frontend build, privacy audit, and production dependency audit.
+browser checks, frontend build, privacy audit, and full npm dependency audit.
 Run `pnpm verify` before a release checkpoint. Native Windows journeys require
 a current release executable and generated fixtures.
+
+`pnpm samples:showcase` creates the owned illustration set used by
+`pnpm test:native:ledger:windows`. That native journey tests a twenty-image batch,
+two moved-source failures, a separate damaged input, retry preparation and
+unsuccessful reinspection, output/source hashes, and explicit animation consent.
+Use `MORFLO_NATIVE_APP` to target the installed executable. Close Morflo before
+starting any native journey; its single-instance handoff must not attach the test
+to an unrelated running session. Evidence stays under ignored `work/` paths.
 
 The manual `quality-and-platforms.yml` workflow calls the same quality contract,
 then compiles Windows, Linux and both macOS architectures. It does not upload

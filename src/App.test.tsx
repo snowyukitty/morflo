@@ -31,6 +31,8 @@ describe("Morflo primary UI", () => {
   test("shows the privacy promise and a single clear empty-state action", () => {
     setView("demo=empty&theme=light");
     render(<App />);
+    const manual = screen.queryByText("Manual settings");
+    if (manual) fireEvent.click(manual);
 
     expect(
       screen.getByRole("heading", { name: "Files in. Better formats out." }),
@@ -43,6 +45,8 @@ describe("Morflo primary UI", () => {
     const user = userEvent.setup();
     setView("demo=queue&theme=light");
     render(<App />);
+    const manual = screen.queryByText("Manual settings");
+    if (manual) fireEvent.click(manual);
 
     expect(screen.getByText("JPEG has no transparency", { selector: "strong" })).toBeVisible();
     await user.click(screen.getByRole("button", { name: "PNG. Keeps transparency" }));
@@ -54,6 +58,8 @@ describe("Morflo primary UI", () => {
     const user = userEvent.setup();
     setView("demo=queue&theme=light");
     render(<App />);
+    const manual = screen.queryByText("Manual settings");
+    if (manual) fireEvent.click(manual);
 
     const checkbox = screen.getByRole("checkbox", { name: "Select O'Reilly cup.jpg" });
     await user.click(checkbox);
@@ -71,6 +77,8 @@ describe("Morflo primary UI", () => {
     const user = userEvent.setup();
     setView("demo=engine-native&theme=light");
     render(<App />);
+    const manual = screen.queryByText("Manual settings");
+    if (manual) fireEvent.click(manual);
     await user.click(screen.getByText("O'Reilly cup.jpg"));
     expect(screen.getByRole("button", { name: "JPEG. Easy to share" })).toHaveAttribute(
       "aria-pressed",
@@ -90,6 +98,8 @@ describe("Morflo primary UI", () => {
     const user = userEvent.setup();
     setView("demo=queue&theme=light");
     render(<App />);
+    const manual = screen.queryByText("Manual settings");
+    if (manual) fireEvent.click(manual);
     await user.click(screen.getByRole("button", { name: "Select all" }));
     await user.click(screen.getByRole("button", { name: "Easy to share" }));
     expect(screen.getByLabelText("Resize mode")).toHaveValue("contain");
@@ -108,6 +118,8 @@ describe("Morflo primary UI", () => {
     const user = userEvent.setup();
     setView("demo=engine-native&theme=dark");
     render(<App />);
+    const manual = screen.queryByText("Manual settings");
+    if (manual) fireEvent.click(manual);
     await user.click(screen.getByRole("button", { name: /^Smaller file/ }));
     expect(screen.getByRole("button", { name: "PNG. Keeps transparency" })).toHaveAttribute(
       "aria-pressed",
@@ -134,6 +146,8 @@ describe("Morflo primary UI", () => {
     const user = userEvent.setup();
     setView("demo=active&theme=light");
     render(<App />);
+    const manual = screen.queryByText("Manual settings");
+    if (manual) fireEvent.click(manual);
 
     await user.click(screen.getByRole("button", { name: "Cancel Tokyo morning.mov" }));
     expect(screen.getByText("Canceled")).toBeVisible();
@@ -145,6 +159,8 @@ describe("Morflo primary UI", () => {
     const user = userEvent.setup();
     setView("demo=gif&theme=light");
     render(<App />);
+    const manual = screen.queryByText("Manual settings");
+    if (manual) fireEvent.click(manual);
 
     expect(screen.getByRole("heading", { name: "Choose the moment" })).toBeVisible();
     expect(screen.getByText("6.0 sec selected")).toBeVisible();
@@ -185,6 +201,8 @@ describe("Morflo primary UI", () => {
     const user = userEvent.setup();
     setView("demo=error&theme=light");
     render(<App />);
+    const manual = screen.queryByText("Manual settings");
+    if (manual) fireEvent.click(manual);
 
     expect(screen.getByRole("button", { name: "Nothing ready" })).toBeDisabled();
     await user.click(screen.getByRole("button", { name: "Try again" }));
@@ -205,6 +223,8 @@ describe("Morflo primary UI", () => {
 
     first.unmount();
     render(<App />);
+    const manual = screen.queryByText("Manual settings");
+    if (manual) fireEvent.click(manual);
     await user.click(screen.getByRole("button", { name: "Open settings" }));
     expect(screen.getByLabelText("Default collision behavior")).toHaveValue("skip");
   });
@@ -213,6 +233,8 @@ describe("Morflo primary UI", () => {
     const user = userEvent.setup();
     setView("demo=queue&theme=light");
     render(<App />);
+    const manual = screen.queryByText("Manual settings");
+    if (manual) fireEvent.click(manual);
 
     await user.selectOptions(screen.getByLabelText("If a file exists"), "replace");
     expect(
@@ -249,6 +271,8 @@ describe("Morflo primary UI", () => {
   test("shows capability evidence for a ready engine", () => {
     setView("demo=queue&panel=diagnostics&theme=dark");
     render(<App />);
+    const manual = screen.queryByText("Manual settings");
+    if (manual) fireEvent.click(manual);
 
     expect(screen.getByText("Ready to convert")).toBeVisible();
     expect(screen.getByText("8 / 8")).toBeVisible();
@@ -259,11 +283,13 @@ describe("Morflo primary UI", () => {
   test("turns a completed file into a truthful conversion receipt", () => {
     setView("demo=complete&theme=light");
     render(<App />);
+    const manual = screen.queryByText("Manual settings");
+    if (manual) fireEvent.click(manual);
 
     expect(screen.getByRole("heading", { name: "Your MP4 is ready" })).toBeVisible();
     expect(screen.getByText("61% smaller")).toBeVisible();
     expect(screen.getByText("1080 × 1920 · 0:42")).toBeVisible();
-    expect(screen.getByText("京都散歩 🧳.mp4")).toBeVisible();
+    expect(screen.getByText("京都散歩 🧳.mp4", { selector: "strong" })).toBeVisible();
     expect(screen.getByText("Same folder as source")).toBeVisible();
     expect(screen.getByText("The source stayed untouched.")).toBeVisible();
     expect(screen.getByRole("button", { name: "Reveal in folder" })).toBeEnabled();
@@ -273,6 +299,8 @@ describe("Morflo primary UI", () => {
     const user = userEvent.setup();
     setView("demo=partial&theme=light");
     render(<App />);
+    const manual = screen.queryByText("Manual settings");
+    if (manual) fireEvent.click(manual);
 
     await user.click(screen.getByRole("button", { name: "Select all" }));
     expect(screen.getByRole("heading", { name: "1 of 2 outputs is ready" })).toBeVisible();

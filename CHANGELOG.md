@@ -1,5 +1,25 @@
 # Changelog
 
+## Unreleased — conversion ledger and batch recovery
+
+- Source-to-output rows pair recognizable previews with planned settings, actual
+  dimensions, measured bytes, signed size changes and direct Reveal actions.
+- Honest batch totals compare only successful measured files, including larger
+  outputs. Row positions remain stable when planned targets become results.
+- All files, Needs attention and Completed views make mixed batches navigable.
+  Hidden files are excluded from selection edits and keyboard removal.
+- Prepare retries restores failed/canceled jobs for settings review, serially
+  reinspecting unreadable sources when needed. It preserves successful results,
+  does not start conversion, and retains existing animation consent decisions.
+- Refined responsive layout, paired thumbnails, progressive manual settings,
+  explicit unavailable-video recovery, keyboard focus and light/dark themes.
+- Real native screenshots and 1200/480/320-pixel showcase assets replace
+  illustrative results, with original sample provenance and repeatable capture.
+- Expanded Windows batch evidence covers multiple failures, failed reinspection,
+  recovery without reprocessing successful files, and unchanged source hashes.
+
+The package version remains 0.3.0. This source checkpoint is not a binary release.
+
 ## 0.3.0 source checkpoint
 
 ### Added
